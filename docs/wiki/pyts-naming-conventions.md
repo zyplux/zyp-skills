@@ -1,51 +1,63 @@
-# TypeScript and Python naming conventions (shared)
+# Naming conventions (Python and TypeScript)
 
-## Functions and methods
-
-- **Start with a verb that names the action.** Functions are actions; their names should make the action obvious without reading the body. Prefer `calculateTotal` over `total`, `saveUser` over `userSaver`.
-
-- **Pick the verb that matches the cost and side effects.** Use `get` only for cheap, single-item, in-memory lookups; `list` for collection scans; `find` for predicate searches that may return nothing; `fetch` for network I/O; `load` for disk or cache reads; `compute` or `calculate` for non-trivial derivations.
-
-- **Use a consistent verb for each concept across the codebase.** If you scan-and-return-many with `list`, don't mix in `get` for the same shape of operation elsewhere; pick one verb per semantic and stick with it.
-
-- **Boolean-returning functions read as questions.** Prefix with `is`, `has`, `can`, `should`, or `was` so call sites read like predicates, and avoid negated forms like `isNotEmpty` in favour of positive phrasing like `hasValue`.
-
-- **Reserve property-style access (Python `@property`, TS `get`/`set` accessors) for cheap, pure reads with no side effects.** A getter must not do I/O, must not mutate observable state, and should return the same value on repeated calls unless it's a one-time cached computation.
-
-## Variables and parameters
-
-- **Use nouns or noun phrases that describe what the value holds, not how it's stored.** Prefer `originalImage` over `img1`, `userEmail` over `str`.
-
-- **Use plural nouns for collections and singular for individual items.** A list of users is `users`; one element pulled from it is `user`. The plural carries cardinality, so don't append `List`, `Array`, or `Collection`.
-
-- **Don't restate the containing context in the name.** Inside a `User` class, the field is `email`, not `userEmail`; inside an `Image` class, the field is `width`, not `imageWidth`. Context already provides the qualifier.
-
-- **Spell out names; don't truncate by deleting letters.** Use `configuration` or `config` (an accepted abbreviation), but never `cfg`, `usr`, or `prc`. Short names are acceptable only for variables whose scope is a handful of lines, like loop counters.
-
-- **Avoid ambiguous single letters and lookalike characters.** Skip `l`, `O`, and `I` as standalone names since they're visually indistinguishable from digits. Single letters are reserved for tight, conventional scopes like `i`, `j`, `k` in loops or `x`, `y` in coordinates.
-
-- **Avoid placeholder or grab-bag words.** Names like `data`, `info`, `process`, `handle`, `manage`, `value`, or `object` carry no information; replace them with what the thing actually is.
-
-## Classes, types, and interfaces
-
-- **Name classes and types with nouns or noun phrases describing what they represent.** A class is a thing, not an action; prefer `OrderProcessor` over `ProcessOrder`.
-
-- **Don't prefix interfaces with `I` or suffix types with `Type`.** Modern style names the interface for what it represents (`User`, `TodoItemStorage`), distinguishing it from implementations by purpose, not by a typographic marker.
-
-- **Suffix error classes with `Error`.** Exception and error types should end in `Error` so they're recognisable at a glance; reserve other suffixes for non-error signal types.
-
-- **Use a consistent word order across related names.** If you have `ParseAddressError`, don't also have `LookupErrorDns`; pick verb-object-error (or whichever order fits the domain) and apply it uniformly.
-
-## Constants
-
-- **Name constants for the concept, not the literal value.** `MAX_RETRY_ATTEMPTS` describes intent; `THREE` describes nothing. The name should still make sense if the underlying number changes.
+These rules describe **which words to pick** for names — not how to case them. Apply your target language's idiomatic casing on top. Examples are written as space-separated word phrases so they read the same in either language.
 
 ## General principles
 
-- **Optimise for the reader, not the writer.** Code is read far more often than written, so a slightly longer descriptive name almost always beats a clever short one. `getInitials` is better than `gi`, even though it costs more keystrokes.
+- **Optimise for the reader.** A clear long name beats a clever short one. Prefer `get initials` over `gi`. Code is read far more often than written.
 
-- **Don't encode the type in the name.** TypeScript and Python both have type systems or annotations to carry that information; names like `userArray`, `nameStr`, or `countInt` are redundant.
+- **Match the vocabulary of the domain.** Use the words the product, users, or external API already use. If the domain says "customer," don't call it "client." A shared glossary prevents drift.
 
-- **Match the vocabulary of the domain.** Use the words your users, product, or API already use ("customer," not "client," if the domain calls them customers); a project-wide glossary of preferred terms prevents drift.
+- **Don't encode the type in the name.** Type systems and annotations already carry that information. Drop suffixes like `array`, `str`, `int`, `bool`, `dict` — they're redundant.
 
-- **Prefer clarity over brevity, but cut anything that adds no meaning.** Drop filler words like `use_`, `with_`, `do_`, `perform_` unless they distinguish the function from a sibling; the verb alone usually carries the action.
+- **Avoid placeholder words.** `data`, `info`, `process`, `handle`, `manage`, `value`, `object`, `item`, `thing`, `stuff` carry no meaning. Replace each with what the thing actually is.
+
+- **Spell names out; don't truncate by deleting letters.** `configuration` or `config` (an accepted abbreviation), never `cfg`, `usr`, `prc`. Single letters are reserved for conventional tight scopes — `i`/`j`/`k` for loop indices, `x`/`y` for coordinates. Avoid `l`, `O`, and `I` as standalone names since they look like digits.
+
+- **Cut filler.** Drop `use`, `with`, `do`, `perform`, `handle`, `helper`, `util`, `manager` unless they distinguish a sibling. The action verb or domain noun alone usually carries the meaning.
+
+## Functions and methods
+
+- **Start with a verb that names the action.** Prefer `calculate total` over `total`, `save user` over `user saver`. A function is an action; the name should make that obvious without reading the body.
+
+- **Pick the verb that matches the cost and side effects.** Establish a consistent verb vocabulary and apply it across the codebase. Don't mix `get users` and `list users` for the same operation:
+
+  | Verb | Use for |
+  |---|---|
+  | `get` | Cheap, in-memory, single-item lookup that always succeeds |
+  | `find` | Predicate search that may return nothing |
+  | `list` | Return a collection (often after a scan or filter) |
+  | `fetch` | Network I/O |
+  | `load` | Disk or cache read |
+  | `compute` / `calculate` | Non-trivial derivation |
+  | `build` / `make` | Construct a new value or object |
+  | `parse` | String → structured value |
+  | `serialize` / `format` | Structured value → string |
+  | `validate` | Check invariants; raise or return an error on failure |
+  | `ensure` | Make a condition true (idempotent) |
+
+- **Boolean-returning functions read as questions.** Prefix with `is`, `has`, `can`, `should`, or `was`. Prefer positive phrasing (`has value`) over negated (`is not empty`); negations compound badly at call sites.
+
+- **Reserve property-style access for cheap, pure reads.** Python `@property` and TypeScript `get`/`set` accessors must not do I/O, must not mutate observable state, and should return the same value on repeated calls (a one-time cached computation is fine). If it can fail, block, or surprise — make it a method.
+
+## Variables and parameters
+
+- **Use a noun that describes what the value holds, not how it's stored.** Prefer `original image` over `img1`, `user email` over `str`.
+
+- **Plural for collections, singular for items.** A list of users is `users`; one element pulled from it is `user`. The plural already carries cardinality — don't append `list`, `array`, or `collection`.
+
+- **Don't restate the containing context.** Inside a user class, the field is `email`, not `user email`. Inside an image class, the field is `width`, not `image width`. The enclosing scope already qualifies the name.
+
+## Classes, types, and interfaces
+
+- **Use nouns or noun phrases for what the thing represents.** A class is a thing, not an action; prefer `order processor` over `process order`.
+
+- **Don't mark types with typographic prefixes or suffixes.** No `I` prefix on interfaces, no `T` prefix on types, no `Type`/`Interface`/`Impl` suffixes. Name the concept (`user`, `todo item storage`) and distinguish implementations by purpose, not by marker.
+
+- **Suffix error and exception classes with `Error`.** A parse failure is a `parse address Error`, not a `parse address Failure` or `parse address Exception`. The `Error` suffix is the visual cue.
+
+- **Use a consistent word order across related names.** If one error reads as verb-object-`Error`, every sibling should too. Don't mix `parse address Error` with `lookup Error dns` — pick the ordering that fits the domain and apply it uniformly to the whole family.
+
+## Constants
+
+- **Name the concept, not the literal value.** `max retry attempts` describes intent; `three` describes nothing. The name should still read correctly if the underlying number changes.
