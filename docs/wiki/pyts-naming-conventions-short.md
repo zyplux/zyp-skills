@@ -1,5 +1,5 @@
 ---
-title: CLAUDE.md section
+title: PyTS Naming Conventions
 ---
 
 ## Naming Conventions
