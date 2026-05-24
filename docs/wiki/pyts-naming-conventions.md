@@ -1,5 +1,5 @@
 ---
-title: CLAUDE.md
+title: Python/TypeScript naming conventions
 ---
 
 ## Naming conventions (Python and TypeScript)
