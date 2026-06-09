@@ -31,7 +31,6 @@ SKILLS_DIR = REPO_ROOT / "skills"
 BASE_REF = "origin/main"
 
 SKILL_MD_VERSION_RE = re.compile(r'^(\s*version:\s*).*$', re.MULTILINE)
-PKG_JSON_VERSION_RE = re.compile(r'^(\s*"version":\s*).*$', re.MULTILINE)
 PY_VERSION_RE = re.compile(r'^(__version__\s*=\s*).*$', re.MULTILINE)
 SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 SKILL_MD_VERSION_READ_RE = re.compile(r'^\s*version:\s*"?([^"\s]+)"?\s*$', re.MULTILINE)

@@ -23,41 +23,8 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --all-groups
+      - run: uv run --no-sync vulture
       - run: uv run --no-sync rumdl check
       - run: uv run --no-sync ruff check
-      - run: uv run --no-sync pyright
+      - run: uv run --no-sync pyrefly check
       - run: uv run --no-sync pytest
-
-  claude-code-review:
-    name: claude code review
-    needs: ci
-    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-      issues: write
-      id-token: write
-    env:
-      REVIEW_GUIDELINES_URL: https://raw.githubusercontent.com/realSergiy/realSergiy.github.io/master/gists_37132/CLAUDE.md
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-      - name: Fetch review guidelines
-        run: |
-          curl -fsSL "$REVIEW_GUIDELINES_URL" -o "$RUNNER_TEMP/review-guidelines.md"
-          {
-            echo 'REVIEW_GUIDELINES<<__GUIDELINES_EOF__'
-            cat "$RUNNER_TEMP/review-guidelines.md"
-            echo '__GUIDELINES_EOF__'
-          } >> "$GITHUB_ENV"
-      - uses: anthropics/claude-code-action@v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          plugin_marketplaces: "https://github.com/anthropics/claude-code.git"
-          plugins: "code-review@claude-code-plugins"
-          prompt: "/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
-          claude_args: |
-            --setting-sources user
-            --append-system-prompt "${{ env.REVIEW_GUIDELINES }}"

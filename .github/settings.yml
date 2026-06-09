@@ -1,4 +1,4 @@
-# Declarative repo configuration. Applied by the Settings GitHub App (see README).
+# Declarative repo configuration. Applied by the Settings GitHub App (https://github.com/apps/settings).
 # Reference: https://github.com/repository-settings/app/blob/master/docs/plugins/branches.md
 
 repository:
@@ -15,11 +15,18 @@ repository:
   squash_merge_commit_message: PR_BODY
   delete_branch_on_merge: true
 
+# Personal repos grant collaborators write access regardless of the requested
+# permission (granular roles are org-only); main stays guarded by the branch
+# protection below.
+collaborators:
+  - username: zyplux
+    permission: push
+
 branches:
   - name: main
     protection:
       required_pull_request_reviews:
-        required_approving_review_count: 0
+        required_approving_review_count: 1
         dismiss_stale_reviews: true
         require_code_owner_reviews: true
         require_last_push_approval: false
@@ -32,5 +39,7 @@ branches:
       required_conversation_resolution: true
       allow_force_pushes: false
       allow_deletions: false
-      enforce_admins: true
+      # Off so the owner (admin) can push to main directly and merge with the
+      # bypass checkbox; write collaborators stay fully bound by the rules above.
+      enforce_admins: false
       restrictions: null

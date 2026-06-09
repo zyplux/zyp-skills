@@ -13,20 +13,21 @@ A collection of skills for Claude Code.
 | [mermaid](skills/mermaid/SKILL.md) | prompt | Pick the right Mermaid diagram type and render it correctly |
 | [plan-storm](skills/plan-storm/SKILL.md) | prompt | Brainstorm a `plan.md` through option-rich rounds before any code |
 
-Each skill declares `metadata.kind` in its SKILL.md: `cli` skills ship an executable (installed via `just i <name>`); `prompt` skills are SKILL.md-driven with no binary. Omitting `metadata.kind` defaults to `prompt`.
+Each skill declares `metadata.kind` in its SKILL.md: `cli` skills ship an executable (installed via `just si <name>`); `prompt` skills are SKILL.md-driven with no binary. Omitting `metadata.kind` defaults to `prompt`.
 
 ## Development
 
 Requires [uv](https://docs.astral.sh/uv/), [just](https://just.systems/), and the [GitHub CLI](https://cli.github.com/) (`gh`).
 
 ```bash
-just sync        # install all deps
-just l           # lint (autofixes; pass --check / -c to skip)
-just tc          # typecheck (lints first)
-just t           # test (typechecks and lints first)
-just i           # install every skill globally (from github main; force with FORCE=1)
-just i <name>    # install a single skill
-just u <name>    # uninstall a skill
+just i           # install all deps
+just c           # full gate: install, knip (vulture), typecheck, lint, test — autofix
+just l           # lint (autofixes)
+just tc          # typecheck
+just t           # test
+just si          # install every skill globally (from github main; force with FORCE=1)
+just si <name>   # install a single skill
+just su <name>   # uninstall a skill
 just p           # push branch + open draft PR (-r marks ready, waits, squash-merges)
 ```
 

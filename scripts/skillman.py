@@ -61,9 +61,7 @@ def _conf_path(skill: str) -> Path:
 
 
 def _version(skill_dir: Path) -> str | None:
-    metadata = read_properties(skill_dir).metadata or {}
-    v = metadata.get("version")
-    return None if v is None else str(v)
+    return read_properties(skill_dir).metadata.get("version")
 
 
 def _all_skills() -> list[str]:

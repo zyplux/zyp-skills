@@ -1,6 +1,6 @@
 {
   "name": "h2md",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "bin": {
     "h2md": "./h2md.py"
   }

@@ -39,9 +39,8 @@ def test_skill_has_semver_version(skill_dir: Path) -> None:
         f"Skill '{skill_dir.name}' is missing metadata.version. "
         f"Add a semver string (e.g. version: \"0.1.0\") to the frontmatter."
     )
-    version_str = str(version)
-    assert SEMVER_RE.match(version_str), (
-        f"Skill '{skill_dir.name}' has metadata.version={version_str!r}; "
+    assert SEMVER_RE.match(version), (
+        f"Skill '{skill_dir.name}' has metadata.version={version!r}; "
         f"expected MAJOR.MINOR.PATCH with no pre-release suffix."
     )
 

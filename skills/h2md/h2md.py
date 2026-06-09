@@ -32,7 +32,7 @@ from bs4.element import NavigableString
 from markdownify import MarkdownConverter
 from toon_format import decode, encode
 
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 
 app = typer.Typer()
 
@@ -452,7 +452,7 @@ def _classes_from_tag(tag: Tag) -> list[str]:
         return []
     if isinstance(raw, str):
         return raw.split()
-    return [str(c) for c in raw]
+    return list(raw)
 
 
 _KNOWN_LANGS = {

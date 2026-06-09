@@ -23,9 +23,9 @@ test = [
 lint = [
     "ruff>=0.11",
     "rumdl>=0.1.84",
+    "vulture>=2.14",
 ]
 typecheck = [
-    "pyright>=1.1",
     "duckdb>=1.0",
     "typer>=0.15",
     "toon-format>=0.9.0b1",
@@ -37,7 +37,19 @@ typecheck = [
     "pyyaml>=6.0",
     "types-pyyaml>=6.0",
     "skills-ref>=0.1",
+    "pyrefly>=1.0.0",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.pyrefly]
+python-interpreter-path = ".venv/bin/python3"
+
+[tool.vulture]
+paths = ["skills", "scripts"]
+# Typer invokes command/callback functions through the decorator, never by name, so
+# vulture reads them as dead. Same for eager `--version` option params: typer routes
+# them straight to the callback, so the function body never reads `version`.
+ignore_decorators = ["@app.command", "@app.callback"]
+ignore_names = ["version"]
