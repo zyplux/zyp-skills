@@ -11,7 +11,7 @@ description: >
   against a registered repo.
 metadata:
   kind: cli
-  version: "0.1.0"
+  version: "0.2.0"
   user-invocable: "true"
   argument-hint: "[rough idea or rich observation]"
 ---

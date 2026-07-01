@@ -22,7 +22,7 @@ import typer
 import yaml
 from toon_format import encode
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REGISTRY_PATH = SCRIPT_DIR / "registry.toml"
