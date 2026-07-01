@@ -28,11 +28,7 @@ def _version_callback(*, value: bool) -> None:
 
 
 _DEFAULT_DIR = Path.home() / "Documents" / "skill-suggestions"
-SKILL_SUGGEST_DIR = (
-    Path(os.environ["SKILL_SUGGEST_DIR"])
-    if "SKILL_SUGGEST_DIR" in os.environ
-    else _DEFAULT_DIR
-)
+SKILL_SUGGEST_DIR = Path(os.environ["SKILL_SUGGEST_DIR"]) if "SKILL_SUGGEST_DIR" in os.environ else _DEFAULT_DIR
 
 
 def _save(skill: str, text: str) -> Path:
@@ -50,9 +46,7 @@ def main(
     skill: Annotated[str, typer.Argument(help="Name of the skill to improve")],
     text: Annotated[
         str | None,
-        typer.Argument(
-            help="Markdown: Context, Gap, Responsibility, Suggestion, Impact. Use '-' to read from stdin."
-        ),
+        typer.Argument(help="Markdown: Context, Gap, Responsibility, Suggestion, Impact. Use '-' to read from stdin."),
     ] = None,
     version: Annotated[
         bool | None,
@@ -69,7 +63,8 @@ def main(
         text = sys.stdin.read()
     assert text is not None
     if not text.strip():
-        raise typer.BadParameter("Suggestion text cannot be empty")
+        msg = "Suggestion text cannot be empty"
+        raise typer.BadParameter(msg)
     path = _save(skill, text)
     typer.echo(encode({"saved": str(path)}))
 

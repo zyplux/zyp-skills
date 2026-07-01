@@ -163,9 +163,7 @@ class ToolNotFoundError(RuntimeError):
         super().__init__(f"`{tool}` not found on PATH")
 
 
-def _gh(
-    *args: str, stdin: str | None = None, check: bool = True
-) -> subprocess.CompletedProcess[str]:
+def _gh(*args: str, stdin: str | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
     """The single audited subprocess boundary for stormitem.
 
     `gh` is resolved to an absolute path via PATH, the remaining args are
@@ -201,17 +199,11 @@ def _gh_json(*args: str) -> object:
 def _fetch_template(target: Repo, kind: str) -> tuple[str, str]:
     listing: list[dict[str, Any]] = []
     try:
-        payload = _gh_json(
-            "api", f"repos/{target.slug}/contents/.github/ISSUE_TEMPLATE"
-        )
+        payload = _gh_json("api", f"repos/{target.slug}/contents/.github/ISSUE_TEMPLATE")
     except subprocess.CalledProcessError:
         payload = None
     if isinstance(payload, list):
-        listing = [
-            item
-            for item in payload
-            if isinstance(item, dict) and item.get("type") == "file"
-        ]
+        listing = [item for item in payload if isinstance(item, dict) and item.get("type") == "file"]
     chosen = _match_template(listing, kind)
     if chosen is not None:
         body = _fetch_file(target, str(chosen["path"]))
@@ -299,9 +291,7 @@ def _parse_yml_form(raw: str) -> tuple[dict[str, Any], str]:
             label = str(attrs.get("label") or "").strip()
             if not label:
                 continue
-            placeholder = str(
-                attrs.get("placeholder") or attrs.get("description") or ""
-            ).strip()
+            placeholder = str(attrs.get("placeholder") or attrs.get("description") or "").strip()
             sections.append(f"## {label}\n\n{placeholder}\n")
     body = "\n".join(sections) if sections else "## Details\n"
     return fm, body
@@ -336,15 +326,9 @@ def _render_issue(
 @app.command()
 def pull(
     repo: Annotated[str, typer.Argument(help="Short repo name (e.g. zyp-skills)")],
-    kind: Annotated[
-        str, typer.Option("--kind", help="Conventional Commits type (feat, fix, ...)")
-    ],
-    feature: Annotated[
-        str, typer.Option("--feature", help="Conventional Commits scope (per-repo)")
-    ],
-    title: Annotated[
-        str, typer.Option("--title", help="Issue title (raw text; spaces ok)")
-    ],
+    kind: Annotated[str, typer.Option("--kind", help="Conventional Commits type (feat, fix, ...)")],
+    feature: Annotated[str, typer.Option("--feature", help="Conventional Commits scope (per-repo)")],
+    title: Annotated[str, typer.Option("--title", help="Issue title (raw text; spaces ok)")],
 ) -> None:
     """Fetch an issue template, populate frontmatter, and write issue.md to a fresh tmp dir."""
     _validate_kind(kind)
@@ -366,18 +350,14 @@ def pull(
         "slug": slug,
         "template_used": template_used,
     }
-    issue_path.write_text(
-        _render_issue(_pr_title(kind, feature, title), fm_meta, stormitem_meta, body)
-    )
+    issue_path.write_text(_render_issue(_pr_title(kind, feature, title), fm_meta, stormitem_meta, body))
     typer.echo(
-        encode(
-            {
-                "dir": str(work_dir),
-                "slug": slug,
-                "template_used": template_used,
-                "issue_path": str(issue_path),
-            }
-        )
+        encode({
+            "dir": str(work_dir),
+            "slug": slug,
+            "template_used": template_used,
+            "issue_path": str(issue_path),
+        })
     )
 
 
@@ -388,9 +368,7 @@ def pull(
 
 def _detect_push(target: Repo) -> bool:
     try:
-        out = _gh(
-            "api", f"repos/{target.slug}", "--jq", ".permissions.push"
-        ).stdout.strip()
+        out = _gh("api", f"repos/{target.slug}", "--jq", ".permissions.push").stdout.strip()
     except subprocess.CalledProcessError:
         return False
     return out.lower() == "true"
@@ -431,13 +409,11 @@ def _create_branch(target: Repo, branch: str, sha: str) -> None:
 
 
 def _put_file(target: Repo, path: str, message: str, content: str, branch: str) -> None:
-    payload = json.dumps(
-        {
-            "message": message,
-            "content": base64.b64encode(content.encode()).decode(),
-            "branch": branch,
-        }
-    )
+    payload = json.dumps({
+        "message": message,
+        "content": base64.b64encode(content.encode()).decode(),
+        "branch": branch,
+    })
     _gh(
         "api",
         "-X",
@@ -505,11 +481,7 @@ def _edit_issue(target: Repo, number: int, body: str) -> None:
 
 
 def _create_gist(plan_path: Path) -> str:
-    return (
-        _gh("gist", "create", "--filename", "plan.md", str(plan_path))
-        .stdout.strip()
-        .splitlines()[-1]
-    )
+    return _gh("gist", "create", "--filename", "plan.md", str(plan_path)).stdout.strip().splitlines()[-1]
 
 
 def _issue_number(url: str) -> int:

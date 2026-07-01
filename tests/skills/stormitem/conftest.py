@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any, Never
 
 import pytest
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @pytest.fixture(scope="session")
@@ -26,7 +28,7 @@ def builtin_only(monkeypatch, stormitem):
     """Force `_fetch_template` to skip the remote listing and use built-ins."""
     import subprocess
 
-    def fake_gh_json(*args: str):
+    def fake_gh_json(*args: str) -> Never:
         raise subprocess.CalledProcessError(1, ["gh", *args])
 
     monkeypatch.setattr(stormitem, "_gh_json", fake_gh_json)

@@ -35,12 +35,12 @@ def skill(request, skill_loader):
     return skill_loader(request.param)
 
 
-def test_help(skill, runner):
+def test_help(skill, runner) -> None:
     result = runner.invoke(skill.app, ["--help"])
     assert result.exit_code == 0
 
 
-def test_version(skill, runner):
+def test_version(skill, runner) -> None:
     result = runner.invoke(skill.app, ["--version"])
     assert result.exit_code == 0
     assert skill.__version__ in result.output
@@ -52,14 +52,10 @@ def _skill_md_version(skill_dir: Path) -> str:
     return m.group(1) if m else ""
 
 
-def test_version_consistent(skill, runner):
+def test_version_consistent(skill, runner) -> None:
     skill_dir = SKILLS_DIR / skill.__name__
     py_version = skill.__version__
     md_version = _skill_md_version(skill_dir)
     pkg_version = json.loads((skill_dir / "package.json").read_text())["version"]
-    assert py_version == md_version, (
-        f"__version__ ({py_version}) != SKILL.md ({md_version})"
-    )
-    assert py_version == pkg_version, (
-        f"__version__ ({py_version}) != package.json ({pkg_version})"
-    )
+    assert py_version == md_version, f"__version__ ({py_version}) != SKILL.md ({md_version})"
+    assert py_version == pkg_version, f"__version__ ({py_version}) != package.json ({pkg_version})"

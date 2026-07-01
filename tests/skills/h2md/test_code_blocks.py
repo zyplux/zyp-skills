@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-def test_language_from_class_preserved(pipeline):
+def test_language_from_class_preserved(pipeline) -> None:
     html = """<!DOCTYPE html><html><body><article>
     <h1>Code Example</h1>
     <p>Example code:</p>
@@ -12,7 +12,7 @@ def test_language_from_class_preserved(pipeline):
     assert 'print("hi")' in r.md
 
 
-def test_language_sniffed_when_no_class(pipeline):
+def test_language_sniffed_when_no_class(pipeline) -> None:
     html = """<!DOCTYPE html><html><body><article>
     <h1>Code Example</h1>
     <p>Run this:</p>
@@ -22,7 +22,7 @@ def test_language_sniffed_when_no_class(pipeline):
     assert "```bash" in r.md
 
 
-def test_headings_preserved(pipeline):
+def test_headings_preserved(pipeline) -> None:
     html = """<!DOCTYPE html><html><body><article>
     <h1>Title</h1>
     <h2>Section</h2>
@@ -33,7 +33,7 @@ def test_headings_preserved(pipeline):
     assert "## Section" in r.md
 
 
-def test_links_preserved(pipeline):
+def test_links_preserved(pipeline) -> None:
     html = """<!DOCTYPE html><html><body><article>
     <h1>Links</h1>
     <p>Visit <a href="https://example.com">our site</a> for more info and details.</p>
@@ -42,7 +42,7 @@ def test_links_preserved(pipeline):
     assert "[our site](https://example.com)" in r.md
 
 
-def test_shiki_spans_produce_clean_code(pipeline, read_fixture):
+def test_shiki_spans_produce_clean_code(pipeline, read_fixture) -> None:
     r = pipeline(read_fixture("shiki_code.html"))
     assert "```javascript" in r.md
     assert "express()" in r.md or "express();" in r.md
@@ -50,13 +50,13 @@ def test_shiki_spans_produce_clean_code(pipeline, read_fixture):
     assert "<span" not in r.md
 
 
-def test_shiki_interspan_whitespace_stripped(pipeline, read_fixture):
+def test_shiki_interspan_whitespace_stripped(pipeline, read_fixture) -> None:
     r = pipeline(read_fixture("shiki_whitespace.html"))
     assert 'import homepage from "./index.html";' in r.md
     assert "const app = express();" in r.md
 
 
-def test_code_chrome_removed(pipeline):
+def test_code_chrome_removed(pipeline) -> None:
     html = """<!DOCTYPE html><html><body><article>
     <h1>Code Example</h1>
     <p>Here is some Python code with UI chrome around it:</p>
@@ -76,7 +76,7 @@ def test_code_chrome_removed(pipeline):
     assert "npm start" in r.md
 
 
-def test_copy_button_elements_stripped(pipeline):
+def test_copy_button_elements_stripped(pipeline) -> None:
     html = """<!DOCTYPE html><html><body><article>
     <h1>Code Examples With Copy Buttons</h1>
     <p>Here is some Python code with a copy icon overlay that should be stripped from the output entirely:</p>
@@ -95,7 +95,7 @@ def test_copy_button_elements_stripped(pipeline):
     assert "curl https://example.com" in r.md
 
 
-def test_data_language_attribute_detected(pipeline):
+def test_data_language_attribute_detected(pipeline) -> None:
     html = """<!DOCTYPE html><html><body><article>
     <h1>Code</h1>
     <p>Rust example:</p>
@@ -105,7 +105,7 @@ def test_data_language_attribute_detected(pipeline):
     assert "```rust" in r.md
 
 
-def test_class_prefix_wins_over_data_attr(pipeline):
+def test_class_prefix_wins_over_data_attr(pipeline) -> None:
     html = """<!DOCTYPE html><html><body><article>
     <h1>Code</h1>
     <p>Example:</p>
@@ -115,7 +115,7 @@ def test_class_prefix_wins_over_data_attr(pipeline):
     assert "```rust" in r.md
 
 
-def test_text_class_overridden_by_sniffed_language(pipeline):
+def test_text_class_overridden_by_sniffed_language(pipeline) -> None:
     html = """<!DOCTYPE html><html><body><article>
     <h1>Title</h1>
     <p>Some text explaining this JavaScript code example for developers.</p>

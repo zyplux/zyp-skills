@@ -50,7 +50,8 @@ def _find_runner() -> Runner:
         if shutil.which(runner.dlx):
             return runner
     tried = ", ".join(r.dlx for r in RUNNERS)
-    raise typer.BadParameter(f"no JS package runner found on PATH; tried: {tried}")
+    msg = f"no JS package runner found on PATH; tried: {tried}"
+    raise typer.BadParameter(msg)
 
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
@@ -65,9 +66,7 @@ def _version(skill_dir: Path) -> str | None:
 
 
 def _all_skills() -> list[str]:
-    return sorted(
-        p.name for p in SKILLS_DIR.iterdir() if p.is_dir() and (p / "SKILL.md").exists()
-    )
+    return sorted(p.name for p in SKILLS_DIR.iterdir() if p.is_dir() and (p / "SKILL.md").exists())
 
 
 def _stale_skills(force: bool) -> list[str]:
@@ -76,9 +75,7 @@ def _stale_skills(force: bool) -> list[str]:
     out: list[str] = []
     for name in _all_skills():
         installed = INSTALL_ROOT / name
-        if not (installed / "SKILL.md").exists() or _version(
-            SKILLS_DIR / name
-        ) != _version(installed):
+        if not (installed / "SKILL.md").exists() or _version(SKILLS_DIR / name) != _version(installed):
             out.append(name)
     return out
 
@@ -94,7 +91,8 @@ def _resolve_env(skill: str) -> dict[str, str]:
         return {}
     raw = tomllib.loads(path.read_text()).get("env", {})
     if not isinstance(raw, dict):
-        raise typer.BadParameter(f"{path}: top-level [env] must be a table")
+        msg = f"{path}: top-level [env] must be a table"
+        raise typer.BadParameter(msg)
     ctx = {"repo_root": str(REPO_ROOT), "skill_dir": str(INSTALL_ROOT / skill)}
     return {k: str(v).format(**ctx) for k, v in raw.items()}
 
@@ -136,7 +134,7 @@ def _remove_env(skill: str) -> None:
 
 def _parse_conf(path: Path) -> dict[str, str]:
     out: dict[str, str] = {}
-    for line in path.read_text().splitlines():
+    for line in path.read_text(encoding="utf-8").splitlines():
         if "=" in line and not line.lstrip().startswith("#"):
             k, _, v = line.partition("=")
             out[k.strip()] = v.strip()
@@ -163,12 +161,11 @@ def _run(*args: str, cwd: Path | None = None, check: bool = True) -> None:
 
 def _install_one(name: str, source: str) -> None:
     if not (SKILLS_DIR / name / "SKILL.md").exists():
-        raise typer.BadParameter(f"unknown skill: {name}")
+        msg = f"unknown skill: {name}"
+        raise typer.BadParameter(msg)
     runner = _find_runner()
     typer.echo(f"==> installing {name} (source: {source}, runner: {runner.dlx})")
-    _run(
-        runner.dlx, "skills", "add", source, "-g", "--skill", name, "-y", cwd=REPO_ROOT
-    )
+    _run(runner.dlx, "skills", "add", source, "-g", "--skill", name, "-y", cwd=REPO_ROOT)
     target = INSTALL_ROOT / name
     py_path = target / f"{name}.py"
     if py_path.exists():
@@ -184,9 +181,7 @@ def _force_default() -> bool:
 
 @app.command()
 def install(
-    name: str = typer.Argument(
-        "", help="Skill to install. Omit to install every stale skill."
-    ),
+    name: str = typer.Argument("", help="Skill to install. Omit to install every stale skill."),
     force: bool = typer.Option(
         False,
         "--force",
@@ -227,9 +222,7 @@ def uninstall(name: str = typer.Argument(..., help="Skill to uninstall.")) -> No
 
 @app.command("list-stale")
 def list_stale(
-    force: bool = typer.Option(
-        False, "--force", "-f", help="List every skill regardless of version match."
-    ),
+    force: bool = typer.Option(False, "--force", "-f", help="List every skill regardless of version match."),
 ) -> None:
     """Print skills whose source version differs from the installed copy, one per line."""
     for name in _stale_skills(force=force or _force_default()):

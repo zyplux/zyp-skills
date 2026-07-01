@@ -31,9 +31,7 @@ class ToolNotFoundError(RuntimeError):
         super().__init__(f"`{tool}` not found on PATH")
 
 
-def _run(
-    *args: str, capture: bool = False, check: bool = True
-) -> subprocess.CompletedProcess[str]:
+def _run(*args: str, capture: bool = False, check: bool = True) -> subprocess.CompletedProcess[str]:
     """The single audited subprocess boundary for pusher.
 
     `args[0]` is resolved to an absolute path via PATH, the remaining args are
@@ -43,18 +41,14 @@ def _run(
     executable = shutil.which(args[0])
     if executable is None:
         raise ToolNotFoundError(args[0])
-    return subprocess.run(
-        [executable, *args[1:]], cwd=REPO_ROOT, text=True, check=check, capture_output=capture
-    )
+    return subprocess.run([executable, *args[1:]], cwd=REPO_ROOT, text=True, check=check, capture_output=capture)
 
 
 def _git(*args: str) -> str:
     return _run("git", *args, capture=True).stdout.strip()
 
 
-def _gh(
-    *args: str, check: bool = True, capture: bool = True
-) -> subprocess.CompletedProcess[str]:
+def _gh(*args: str, check: bool = True, capture: bool = True) -> subprocess.CompletedProcess[str]:
     return _run("gh", *args, capture=capture, check=check)
 
 
@@ -77,9 +71,7 @@ def _clean_body(body: str) -> str:
 
 
 def main(
-    ready: bool = typer.Option(
-        False, "--ready", "-r", help="Mark PR ready and enable auto-merge."
-    ),
+    ready: bool = typer.Option(False, "--ready", "-r", help="Mark PR ready and enable auto-merge."),
 ) -> None:
     """Push the current branch and either open a draft PR or mark it ready."""
     branch = _current_branch()
@@ -92,9 +84,7 @@ def main(
 
     pr = _pr_view()
     if pr is not None and pr.get("state") == "MERGED":
-        typer.echo(
-            f"PR #{pr['number']} merged; switching to main and deleting local branch '{branch}'"
-        )
+        typer.echo(f"PR #{pr['number']} merged; switching to main and deleting local branch '{branch}'")
         _run("git", "checkout", "main")
         _run("git", "pull", "--ff-only")
         _run("git", "branch", "-D", branch)

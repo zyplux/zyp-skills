@@ -11,9 +11,7 @@ SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 SKILL_MD_VERSION_READ_RE = re.compile(r'^\s*version:\s*"?([^"\s]+)"?\s*$', re.MULTILINE)
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = REPO_ROOT / "skills"
-SKILL_DIRS = sorted(
-    p for p in SKILLS_DIR.iterdir() if p.is_dir() and (p / "SKILL.md").exists()
-)
+SKILL_DIRS = sorted(p for p in SKILLS_DIR.iterdir() if p.is_dir() and (p / "SKILL.md").exists())
 BASE_REF = "origin/main"
 
 
@@ -79,9 +77,7 @@ def test_skill_changes_require_version_bump(skill_dir: Path) -> None:
     if main_match is None:
         return
     main_version = main_match.group(1)
-    current_match = SKILL_MD_VERSION_READ_RE.search(
-        (skill_dir / "SKILL.md").read_text()
-    )
+    current_match = SKILL_MD_VERSION_READ_RE.search((skill_dir / "SKILL.md").read_text())
     assert current_match is not None, f"{skill_dir.name}/SKILL.md has no version field"
     current_version = current_match.group(1)
     assert current_version != main_version, (
@@ -113,6 +109,5 @@ def test_skill_kind_matches_layout(skill_dir: Path) -> None:
         )
     else:
         pytest.fail(
-            f"Skill '{skill_dir.name}' has unknown metadata.kind={kind!r}. "
-            f"Valid values: 'cli', 'prompt' (default)."
+            f"Skill '{skill_dir.name}' has unknown metadata.kind={kind!r}. Valid values: 'cli', 'prompt' (default)."
         )

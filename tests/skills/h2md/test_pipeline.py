@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-def test_full_pipeline_produces_expected_outputs(pipeline, read_fixture):
+def test_full_pipeline_produces_expected_outputs(pipeline, read_fixture) -> None:
     r = pipeline(read_fixture("simple_article.html"))
     h = r.toon["h2md"]
     assert h["tokens"] > 0
@@ -15,19 +15,19 @@ def test_full_pipeline_produces_expected_outputs(pipeline, read_fixture):
     assert r.meta
 
 
-def test_pipeline_workspace_has_final_files(pipeline, read_fixture):
+def test_pipeline_workspace_has_final_files(pipeline, read_fixture) -> None:
     r = pipeline(read_fixture("simple_article.html"))
     for name in ["article.md", "meta.toon", "article.html"]:
         assert (r.workspace / name).exists(), f"Missing: {name}"
 
 
-def test_sections_structure(pipeline, read_fixture):
+def test_sections_structure(pipeline, read_fixture) -> None:
     r = pipeline(read_fixture("simple_article.html"))
     assert len(r.sections) > 0
     assert set(r.sections[0].keys()) == {"title", "line", "tokens"}
 
 
-def test_sections_token_counts(pipeline):
+def test_sections_token_counts(pipeline) -> None:
     html = """<!DOCTYPE html><html><body><article>
     <h1>Guide</h1>
     <p>This guide shows how to use the API with several code examples and explanations for developers.</p>
@@ -49,12 +49,12 @@ def test_sections_token_counts(pipeline):
     assert r.toon["h2md"]["tokens"] == sum(s["tokens"] for s in r.sections)
 
 
-def test_js_flag_errors(invoke):
+def test_js_flag_errors(invoke) -> None:
     result = invoke("https://example.com", "--js", expect_error=True)
     assert "playwright" in result.output.lower()
 
 
-def test_copy_to_flag(invoke, serve_html, read_fixture, tmp_path, mock_lint):
+def test_copy_to_flag(invoke, serve_html, read_fixture, tmp_path, mock_lint) -> None:
     url = serve_html(read_fixture("simple_article.html"))
     dest = tmp_path / "output.md"
     result = invoke(url, "--no-assets", "--copy-to", str(dest))
@@ -63,12 +63,12 @@ def test_copy_to_flag(invoke, serve_html, read_fixture, tmp_path, mock_lint):
     assert dest.read_text().strip()
 
 
-def test_issues_absent_when_clean(pipeline, read_fixture):
+def test_issues_absent_when_clean(pipeline, read_fixture) -> None:
     r = pipeline(read_fixture("simple_article.html"))
     assert "issues" not in r.toon
 
 
-def test_issues_present_when_detected(pipeline):
+def test_issues_present_when_detected(pipeline) -> None:
     fused = "x" * 90
     html = f"""<!DOCTYPE html><html><body><article>
     <h1>Title</h1>

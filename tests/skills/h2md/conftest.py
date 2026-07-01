@@ -47,9 +47,7 @@ def invoke(run: Callable[..., Result], h2md: ModuleType) -> Callable[..., Result
 
 
 def _mock_subprocess_run(*args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
-    return subprocess.CompletedProcess(
-        args=args[0] if args else [], returncode=0, stdout="", stderr=""
-    )
+    return subprocess.CompletedProcess(args=args[0] if args else [], returncode=0, stdout="", stderr="")
 
 
 @pytest.fixture

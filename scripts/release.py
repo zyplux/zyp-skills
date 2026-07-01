@@ -68,7 +68,8 @@ def _git_show(ref: str, path: str) -> str | None:
     """
     executable = shutil.which("git")
     if executable is None:
-        raise ToolNotFoundError("git")
+        msg = "git"
+        raise ToolNotFoundError(msg)
     proc = subprocess.run(
         [executable, "show", f"{ref}:{path}"],
         cwd=REPO_ROOT,
@@ -90,7 +91,8 @@ def base_skill_md_version(skill: str) -> str | None:
 def bump_semver(current: str, kind: BumpKind) -> str:
     m = SEMVER_RE.match(current)
     if not m:
-        raise ValueError(f"not a semver: {current!r}")
+        msg = f"not a semver: {current!r}"
+        raise ValueError(msg)
     major, minor, patch = (int(g) for g in m.groups())
     if kind == "major":
         return f"{major + 1}.0.0"
@@ -104,11 +106,13 @@ def diff_kind(base: str, current: str) -> DiffKind:
     bm = SEMVER_RE.match(base)
     cm = SEMVER_RE.match(current)
     if not bm or not cm:
-        raise ValueError(f"non-semver: {base!r} or {current!r}")
+        msg = f"non-semver: {base!r} or {current!r}"
+        raise ValueError(msg)
     bM, bn, bp = (int(g) for g in bm.groups())
     cM, cn, cp = (int(g) for g in cm.groups())
     if (cM, cn, cp) < (bM, bn, bp):
-        raise ValueError(f"current {current} is below base {base}")
+        msg = f"current {current} is below base {base}"
+        raise ValueError(msg)
     if cM != bM:
         return "major"
     if cn != bn:
@@ -127,7 +131,7 @@ def decide_bump(base: str, current: str, requested: BumpKind) -> str | None:
 
 
 def _set_version_in(path: Path, new: str) -> None:
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     if path.name == "SKILL.md":
         new_text = SKILL_MD_VERSION_RE.sub(rf'\1"{new}"', text, count=1)
     elif path.name == "package.json":
@@ -137,10 +141,12 @@ def _set_version_in(path: Path, new: str) -> None:
     elif path.suffix == ".py":
         new_text = PY_VERSION_RE.sub(rf'\1"{new}"', text, count=1)
     else:
-        raise ValueError(f"don't know how to update version in {path}")
+        msg = f"don't know how to update version in {path}"
+        raise ValueError(msg)
     if new_text == text:
-        raise RuntimeError(f"no version field updated in {path}")
-    path.write_text(new_text)
+        msg = f"no version field updated in {path}"
+        raise RuntimeError(msg)
+    path.write_text(new_text, encoding="utf-8")
 
 
 def _apply_version_bump(skill: str, new_version: str) -> None:
@@ -165,26 +171,25 @@ def bump(
 ) -> None:
     """Bump <skill>'s version (default minor). Idempotent + higher-wins."""
     if sum([patch_, minor, major]) > 1:
-        raise typer.BadParameter("pass at most one of --patch / --minor / --major")
+        msg = "pass at most one of --patch / --minor / --major"
+        raise typer.BadParameter(msg)
     requested: BumpKind = "major" if major else "patch" if patch_ else "minor"
     skill_dir = SKILLS_DIR / skill
     if not (skill_dir / "SKILL.md").exists():
-        raise typer.BadParameter(f"unknown skill: {skill}")
+        msg = f"unknown skill: {skill}"
+        raise typer.BadParameter(msg)
     base = base_skill_md_version(skill)
     if base is None:
-        typer.echo(
-            f"{skill}: not on {BASE_REF} (new skill?). Set the initial version manually."
-        )
+        typer.echo(f"{skill}: not on {BASE_REF} (new skill?). Set the initial version manually.")
         return
     current = read_skill_md_version(skill_dir)
     if current is None:
-        raise RuntimeError(f"{skill}: SKILL.md has no version")
+        msg = f"{skill}: SKILL.md has no version"
+        raise RuntimeError(msg)
     new = decide_bump(base, current, requested)
     if new is None:
         kind = diff_kind(base, current)
-        typer.echo(
-            f"{skill}: {current} (already {kind}-bumped from {base}). no change."
-        )
+        typer.echo(f"{skill}: {current} (already {kind}-bumped from {base}). no change.")
         return
     _apply_version_bump(skill, new)
     typer.echo(f"{skill}: {current} → {new} ({requested}, base {base})")

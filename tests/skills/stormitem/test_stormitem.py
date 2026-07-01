@@ -10,65 +10,49 @@ import yaml
 # --- Pure helpers ----------------------------------------------------------
 
 
-def test_slug_simple(stormitem):
+def test_slug_simple(stormitem) -> None:
     assert stormitem._slug("feat", "peek", "support_julia") == "feat_peek_support_julia"
 
 
-def test_slug_converts_spaces(stormitem):
-    assert (
-        stormitem._slug("fix", "h2md", "handle empty body")
-        == "fix_h2md_handle_empty_body"
-    )
+def test_slug_converts_spaces(stormitem) -> None:
+    assert stormitem._slug("fix", "h2md", "handle empty body") == "fix_h2md_handle_empty_body"
 
 
-def test_slug_strips_whitespace(stormitem):
-    assert (
-        stormitem._slug("feat", "peek", "  julia support  ")
-        == "feat_peek_julia_support"
-    )
+def test_slug_strips_whitespace(stormitem) -> None:
+    assert stormitem._slug("feat", "peek", "  julia support  ") == "feat_peek_julia_support"
 
 
-def test_pr_title_converts_underscores(stormitem):
-    assert (
-        stormitem._pr_title("feat", "peek", "support_julia")
-        == "feat(peek): support julia"
-    )
+def test_pr_title_converts_underscores(stormitem) -> None:
+    assert stormitem._pr_title("feat", "peek", "support_julia") == "feat(peek): support julia"
 
 
-def test_pr_title_keeps_existing_spaces(stormitem):
-    assert (
-        stormitem._pr_title("fix", "h2md", "handle empty body")
-        == "fix(h2md): handle empty body"
-    )
+def test_pr_title_keeps_existing_spaces(stormitem) -> None:
+    assert stormitem._pr_title("fix", "h2md", "handle empty body") == "fix(h2md): handle empty body"
 
 
-def test_branch_prefixed(stormitem):
+def test_branch_prefixed(stormitem) -> None:
     assert stormitem._branch("feat_peek_x") == "stormitem/feat_peek_x"
 
 
 # --- Validation ------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    "kind", ["feat", "fix", "docs", "refactor", "perf", "chore", "revert", "ci"]
-)
-def test_validate_kind_accepts_conv_commits(stormitem, kind):
+@pytest.mark.parametrize("kind", ["feat", "fix", "docs", "refactor", "perf", "chore", "revert", "ci"])
+def test_validate_kind_accepts_conv_commits(stormitem, kind) -> None:
     stormitem._validate_kind(kind)
 
 
-@pytest.mark.parametrize(
-    "kind", ["Feat", "FEAT", "feat ", "feat-x", "1feat", "", "feat!"]
-)
-def test_validate_kind_rejects_invalid(stormitem, kind):
+@pytest.mark.parametrize("kind", ["Feat", "FEAT", "feat ", "feat-x", "1feat", "", "feat!"])
+def test_validate_kind_rejects_invalid(stormitem, kind) -> None:
     with pytest.raises(Exception):
         stormitem._validate_kind(kind)
 
 
-def test_validate_feature_accepts(stormitem):
+def test_validate_feature_accepts(stormitem) -> None:
     stormitem._validate_feature("peek", ["peek", "h2md"])
 
 
-def test_validate_feature_rejects(stormitem):
+def test_validate_feature_rejects(stormitem) -> None:
     with pytest.raises(Exception):
         stormitem._validate_feature("bogus", ["peek", "h2md"])
 
@@ -76,13 +60,13 @@ def test_validate_feature_rejects(stormitem):
 # --- Registry --------------------------------------------------------------
 
 
-def test_resolve_repo_known(stormitem):
+def test_resolve_repo_known(stormitem) -> None:
     target, features = stormitem._resolve_repo("zyp-skills")
     assert target.owner == "zyplux"
     assert "stormitem" in features
 
 
-def test_resolve_repo_unknown(stormitem):
+def test_resolve_repo_unknown(stormitem) -> None:
     with pytest.raises(Exception):
         stormitem._resolve_repo("does-not-exist")
 
@@ -90,7 +74,7 @@ def test_resolve_repo_unknown(stormitem):
 # --- Template matching -----------------------------------------------------
 
 
-def test_match_template_substring_feat(stormitem):
+def test_match_template_substring_feat(stormitem) -> None:
     items = [
         {"name": "bug_report.md", "path": ".github/ISSUE_TEMPLATE/bug_report.md"},
         {
@@ -103,7 +87,7 @@ def test_match_template_substring_feat(stormitem):
     assert chosen["name"] == "feature_request.md"
 
 
-def test_match_template_substring_fix(stormitem):
+def test_match_template_substring_fix(stormitem) -> None:
     items = [
         {"name": "bug_report.md", "path": "x"},
         {"name": "feature_request.md", "path": "y"},
@@ -113,7 +97,7 @@ def test_match_template_substring_fix(stormitem):
     assert chosen["name"] == "bug_report.md"
 
 
-def test_match_template_prefers_yml_over_md(stormitem):
+def test_match_template_prefers_yml_over_md(stormitem) -> None:
     items = [
         {"name": "bug_report.md", "path": "x"},
         {"name": "bug_report.yml", "path": "y"},
@@ -123,39 +107,39 @@ def test_match_template_prefers_yml_over_md(stormitem):
     assert chosen["name"] == "bug_report.yml"
 
 
-def test_match_template_no_hit_returns_none(stormitem):
+def test_match_template_no_hit_returns_none(stormitem) -> None:
     items = [{"name": "config.yml", "path": "x"}]
     assert stormitem._match_template(items, "feat") is None
 
 
-def test_match_template_empty_returns_none(stormitem):
+def test_match_template_empty_returns_none(stormitem) -> None:
     assert stormitem._match_template([], "feat") is None
 
 
 # --- Parsing ---------------------------------------------------------------
 
 
-def test_parse_md_with_frontmatter(stormitem):
+def test_parse_md_with_frontmatter(stormitem) -> None:
     raw = "---\nlabels: [bug]\nassignees: [alice]\n---\n\n## What\n\nA bug.\n"
     fm, body = stormitem._parse_md_template(raw)
     assert fm == {"labels": ["bug"], "assignees": ["alice"]}
     assert body == "## What\n\nA bug.\n"
 
 
-def test_parse_md_without_frontmatter(stormitem):
+def test_parse_md_without_frontmatter(stormitem) -> None:
     raw = "## Title\n\nBody only.\n"
     fm, body = stormitem._parse_md_template(raw)
     assert fm == {}
     assert body == raw
 
 
-def test_parse_md_malformed_frontmatter_returns_empty(stormitem):
+def test_parse_md_malformed_frontmatter_returns_empty(stormitem) -> None:
     raw = "---\nnot: ok: [\n---\n\nbody\n"
     fm, _ = stormitem._parse_md_template(raw)
     assert fm == {}
 
 
-def test_parse_yml_form_extracts_labels_and_sections(stormitem):
+def test_parse_yml_form_extracts_labels_and_sections(stormitem) -> None:
     raw = (
         "name: Bug report\n"
         "description: Report a bug\n"
@@ -177,7 +161,7 @@ def test_parse_yml_form_extracts_labels_and_sections(stormitem):
     assert "## Expected behavior" in body
 
 
-def test_parse_yml_form_no_body_falls_back_to_details(stormitem):
+def test_parse_yml_form_no_body_falls_back_to_details(stormitem) -> None:
     raw = "name: x\nlabels: [a]\n"
     fm, body = stormitem._parse_yml_form(raw)
     assert fm == {"labels": ["a"]}
@@ -187,7 +171,7 @@ def test_parse_yml_form_no_body_falls_back_to_details(stormitem):
 # --- Issue rendering -------------------------------------------------------
 
 
-def test_render_issue_includes_stormitem_block(stormitem):
+def test_render_issue_includes_stormitem_block(stormitem) -> None:
     rendered = stormitem._render_issue(
         "feat(peek): julia",
         {"labels": ["enhancement"]},
@@ -211,7 +195,7 @@ def test_render_issue_includes_stormitem_block(stormitem):
     assert "Add Julia." in body
 
 
-def test_render_issue_skips_absent_metadata(stormitem):
+def test_render_issue_skips_absent_metadata(stormitem) -> None:
     rendered = stormitem._render_issue(
         "feat(peek): x",
         {},
@@ -234,9 +218,7 @@ def test_render_issue_skips_absent_metadata(stormitem):
 # --- Pull command ----------------------------------------------------------
 
 
-def test_pull_writes_issue_md_with_frontmatter(
-    invoke, builtin_only, decode, tmp_path, monkeypatch
-):
+def test_pull_writes_issue_md_with_frontmatter(invoke, builtin_only, decode, tmp_path, monkeypatch) -> None:
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
     result = invoke(
         "pull",
@@ -254,7 +236,7 @@ def test_pull_writes_issue_md_with_frontmatter(
     assert parsed["template_used"] == "builtin:feat"
     issue_path = Path(parsed["issue_path"])
     assert issue_path.is_file()
-    content = issue_path.read_text()
+    content = issue_path.read_text(encoding="utf-8")
     assert content.startswith("---\n")
     fm_text = content.split("\n---\n", 1)[0][len("---\n") :]
     fm = yaml.safe_load(fm_text)
@@ -263,9 +245,7 @@ def test_pull_writes_issue_md_with_frontmatter(
     assert fm["stormitem"]["template_used"] == "builtin:feat"
 
 
-def test_pull_dir_starts_with_prefix(
-    invoke, builtin_only, decode, tmp_path, monkeypatch
-):
+def test_pull_dir_starts_with_prefix(invoke, builtin_only, decode, tmp_path, monkeypatch) -> None:
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
     result = invoke(
         "pull",
@@ -282,9 +262,7 @@ def test_pull_dir_starts_with_prefix(
     assert parsed["template_used"] == "builtin:fix"
 
 
-def test_pull_uses_default_template_for_unknown_kind(
-    invoke, builtin_only, decode, tmp_path, monkeypatch
-):
+def test_pull_uses_default_template_for_unknown_kind(invoke, builtin_only, decode, tmp_path, monkeypatch) -> None:
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
     result = invoke(
         "pull",
@@ -300,7 +278,7 @@ def test_pull_uses_default_template_for_unknown_kind(
     assert parsed["template_used"] == "builtin:_default"
 
 
-def test_pull_unknown_repo_fails(invoke):
+def test_pull_unknown_repo_fails(invoke) -> None:
     result = invoke(
         "pull",
         "bogus-repo",
@@ -315,7 +293,7 @@ def test_pull_unknown_repo_fails(invoke):
     assert result.exit_code != 0
 
 
-def test_pull_unknown_feature_fails(invoke):
+def test_pull_unknown_feature_fails(invoke) -> None:
     result = invoke(
         "pull",
         "zyp-skills",
@@ -330,7 +308,7 @@ def test_pull_unknown_feature_fails(invoke):
     assert result.exit_code != 0
 
 
-def test_pull_invalid_kind_fails(invoke):
+def test_pull_invalid_kind_fails(invoke) -> None:
     result = invoke(
         "pull",
         "zyp-skills",
@@ -348,9 +326,7 @@ def test_pull_invalid_kind_fails(invoke):
 # --- Post command ----------------------------------------------------------
 
 
-def _make_workdir(
-    tmp_path: Path, *, slug: str = "feat_peek_julia", repo: str = "zyp-skills"
-) -> Path:
+def _make_workdir(tmp_path: Path, *, slug: str = "feat_peek_julia", repo: str = "zyp-skills") -> Path:
     work = tmp_path / "stormitem-work"
     work.mkdir(parents=True)
     fm = {
@@ -368,14 +344,12 @@ def _make_workdir(
     body = "## Summary\n\nAdd Julia support.\n"
     fm_text = yaml.safe_dump(fm, sort_keys=False).rstrip()
     (work / "issue.md").write_text(f"---\n{fm_text}\n---\n\n{body}")
-    (work / "plan.md").write_text(
-        "# Plan\n\nA detailed plan paragraph.\n\n## Section\n\nMore.\n"
-    )
+    (work / "plan.md").write_text("# Plan\n\nA detailed plan paragraph.\n\n## Section\n\nMore.\n")
     return work
 
 
 class _Recorder:
-    def __init__(self):
+    def __init__(self) -> None:
         self.calls: list[tuple[str, tuple]] = []
 
     def make(self, name: str, *, returns):
@@ -386,7 +360,7 @@ class _Recorder:
         return fn
 
 
-def test_post_pr_mode_full_flow(invoke, stormitem, decode, monkeypatch, tmp_path):
+def test_post_pr_mode_full_flow(invoke, stormitem, decode, monkeypatch, tmp_path) -> None:
     work = _make_workdir(tmp_path)
     rec = _Recorder()
     monkeypatch.setattr(stormitem, "_detect_push", lambda target: True)
@@ -395,9 +369,7 @@ def test_post_pr_mode_full_flow(invoke, stormitem, decode, monkeypatch, tmp_path
         "_create_issue",
         rec.make("issue", returns="https://github.com/zyplux/zyp-skills/issues/42"),
     )
-    monkeypatch.setattr(
-        stormitem, "_default_branch", rec.make("default", returns="main")
-    )
+    monkeypatch.setattr(stormitem, "_default_branch", rec.make("default", returns="main"))
     monkeypatch.setattr(stormitem, "_ref_sha", rec.make("sha", returns="abc123"))
     monkeypatch.setattr(stormitem, "_create_branch", rec.make("branch", returns=None))
     monkeypatch.setattr(stormitem, "_put_file", rec.make("commit", returns=None))
@@ -426,7 +398,7 @@ def test_post_pr_mode_full_flow(invoke, stormitem, decode, monkeypatch, tmp_path
     assert "plan/feat_peek_julia/plan.md" in commit_call[1]
 
 
-def test_post_pr_mode_cleans_non_tmp_dir(invoke, stormitem, monkeypatch, tmp_path):
+def test_post_pr_mode_cleans_non_tmp_dir(invoke, stormitem, monkeypatch, tmp_path) -> None:
     fake_tmp = tmp_path / "fake-tmp"
     fake_tmp.mkdir()
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(fake_tmp))
@@ -452,7 +424,7 @@ def test_post_pr_mode_cleans_non_tmp_dir(invoke, stormitem, monkeypatch, tmp_pat
     assert not work.exists()
 
 
-def test_post_pr_mode_keeps_tmp_dir(invoke, stormitem, monkeypatch, tmp_path):
+def test_post_pr_mode_keeps_tmp_dir(invoke, stormitem, monkeypatch, tmp_path) -> None:
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
     work = tmp_path / "stormitem-work"
     work.mkdir()
@@ -492,7 +464,7 @@ def test_post_pr_mode_keeps_tmp_dir(invoke, stormitem, monkeypatch, tmp_path):
     assert work.exists()
 
 
-def test_post_gist_mode_full_flow(invoke, stormitem, decode, monkeypatch, tmp_path):
+def test_post_gist_mode_full_flow(invoke, stormitem, decode, monkeypatch, tmp_path) -> None:
     work = _make_workdir(tmp_path)
     rec = _Recorder()
     monkeypatch.setattr(stormitem, "_detect_push", lambda target: False)
@@ -523,7 +495,7 @@ def test_post_gist_mode_full_flow(invoke, stormitem, decode, monkeypatch, tmp_pa
     assert "Storming plan" in issue_body
 
 
-def test_post_missing_issue_md_fails(invoke, tmp_path):
+def test_post_missing_issue_md_fails(invoke, tmp_path) -> None:
     work = tmp_path / "incomplete"
     work.mkdir()
     (work / "plan.md").write_text("plan\n")
@@ -531,7 +503,7 @@ def test_post_missing_issue_md_fails(invoke, tmp_path):
     assert result.exit_code != 0
 
 
-def test_post_missing_plan_md_fails(invoke, tmp_path):
+def test_post_missing_plan_md_fails(invoke, tmp_path) -> None:
     work = tmp_path / "incomplete"
     work.mkdir()
     (work / "issue.md").write_text("---\nstormitem: {repo: zyp-skills}\n---\n\nbody\n")
@@ -539,13 +511,13 @@ def test_post_missing_plan_md_fails(invoke, tmp_path):
     assert result.exit_code != 0
 
 
-def test_post_repo_mismatch_fails(invoke, tmp_path):
+def test_post_repo_mismatch_fails(invoke, tmp_path) -> None:
     work = _make_workdir(tmp_path, repo="other-repo")
     result = invoke("post", "zyp-skills", str(work), expect_error=True)
     assert result.exit_code != 0
 
 
-def test_post_missing_stormitem_block_fails(invoke, tmp_path):
+def test_post_missing_stormitem_block_fails(invoke, tmp_path) -> None:
     work = tmp_path / "bare"
     work.mkdir()
     (work / "issue.md").write_text("---\ntitle: x\n---\n\nbody\n")
@@ -557,15 +529,15 @@ def test_post_missing_stormitem_block_fails(invoke, tmp_path):
 # --- URL parsing -----------------------------------------------------------
 
 
-def test_issue_number_parses(stormitem):
+def test_issue_number_parses(stormitem) -> None:
     assert stormitem._issue_number("https://github.com/owner/repo/issues/42") == 42
 
 
-def test_pr_number_parses(stormitem):
+def test_pr_number_parses(stormitem) -> None:
     assert stormitem._pr_number("https://github.com/owner/repo/pull/9") == 9
 
 
-def test_issue_number_missing_fails(stormitem):
+def test_issue_number_missing_fails(stormitem) -> None:
     with pytest.raises(Exception):
         stormitem._issue_number("https://example.com/no-number")
 
@@ -573,12 +545,12 @@ def test_issue_number_missing_fails(stormitem):
 # --- Summary line ----------------------------------------------------------
 
 
-def test_summary_line_skips_headers_and_blanks(stormitem):
+def test_summary_line_skips_headers_and_blanks(stormitem) -> None:
     plan = "# Title\n\n> blockquote\n\nThe first real prose line.\n\n- bullet\n"
     assert stormitem._summary_line(plan) == "The first real prose line."
 
 
-def test_summary_line_fallback_when_only_headers(stormitem):
+def test_summary_line_fallback_when_only_headers(stormitem) -> None:
     plan = "# Title\n\n## Section\n"
     assert stormitem._summary_line(plan) == "Storming plan attached."
 
@@ -586,7 +558,7 @@ def test_summary_line_fallback_when_only_headers(stormitem):
 # --- Cleanup ---------------------------------------------------------------
 
 
-def test_cleanup_skips_tmp(stormitem, monkeypatch, tmp_path):
+def test_cleanup_skips_tmp(stormitem, monkeypatch, tmp_path) -> None:
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
     work = tmp_path / "child"
     work.mkdir()
@@ -594,7 +566,7 @@ def test_cleanup_skips_tmp(stormitem, monkeypatch, tmp_path):
     assert work.exists()
 
 
-def test_cleanup_deletes_non_tmp(stormitem, monkeypatch, tmp_path):
+def test_cleanup_deletes_non_tmp(stormitem, monkeypatch, tmp_path) -> None:
     fake_tmp = tmp_path / "tmp"
     fake_tmp.mkdir()
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(fake_tmp))
@@ -607,7 +579,7 @@ def test_cleanup_deletes_non_tmp(stormitem, monkeypatch, tmp_path):
 # --- Registry command ------------------------------------------------------
 
 
-def test_registry_command_lists_repos(invoke, decode):
+def test_registry_command_lists_repos(invoke, decode) -> None:
     result = invoke("registry")
     parsed = decode(result.output.strip())
     assert "repos" in parsed
@@ -625,11 +597,9 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 SKILLS_DIR = REPO_ROOT / "skills"
 
 
-def test_registry_features_match_skills_dir(stormitem):
+def test_registry_features_match_skills_dir(stormitem) -> None:
     """The registry's `zyp-skills` features must match `os.listdir(skills/)`."""
-    on_disk = sorted(
-        p.name for p in SKILLS_DIR.iterdir() if p.is_dir() and (p / "SKILL.md").exists()
-    )
+    on_disk = sorted(p.name for p in SKILLS_DIR.iterdir() if p.is_dir() and (p / "SKILL.md").exists())
     _, registered = stormitem._resolve_repo("zyp-skills")
     assert sorted(registered) == on_disk, (
         f"registry/zyp-skills features {sorted(registered)} drifted from "
@@ -637,6 +607,6 @@ def test_registry_features_match_skills_dir(stormitem):
     )
 
 
-def test_registry_sane_owner(stormitem):
+def test_registry_sane_owner(stormitem) -> None:
     target, _ = stormitem._resolve_repo("zyp-skills")
     assert target.owner == "zyplux"

@@ -4,11 +4,14 @@ import importlib.util
 import re
 import subprocess
 import sys
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from typer.testing import CliRunner
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 RELEASE_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "release.py"
 VERSION_RE = re.compile(r'version:\s*"?([^"\s]+)"?')
@@ -16,7 +19,8 @@ VERSION_RE = re.compile(r'version:\s*"?([^"\s]+)"?')
 
 def _load_release_module():
     spec = importlib.util.spec_from_file_location("release", RELEASE_SCRIPT)
-    assert spec is not None and spec.loader is not None
+    assert spec is not None
+    assert spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
     sys.modules["release"] = mod
     spec.loader.exec_module(mod)
@@ -32,19 +36,15 @@ def _git(cwd: Path, *args: str) -> None:
 
 
 def _read_version(skill_md: Path) -> str:
-    m = VERSION_RE.search(skill_md.read_text())
+    m = VERSION_RE.search(skill_md.read_text(encoding="utf-8"))
     assert m is not None, f"no version field in {skill_md}"
     return m.group(1)
 
 
 def _write_skill(path: Path, version: str) -> None:
     path.write_text(
-        f"---\n"
-        f"name: {path.parent.name}\n"
-        f"description: test skill\n"
-        f"metadata:\n"
-        f'  version: "{version}"\n'
-        f"---\n"
+        f'---\nname: {path.parent.name}\ndescription: test skill\nmetadata:\n  version: "{version}"\n---\n',
+        encoding="utf-8",
     )
 
 
@@ -80,7 +80,7 @@ def _bump(skill: str, *flags: str):
 
 
 @pytest.mark.parametrize(
-    "base,current,flag,expected",
+    ("base", "current", "flag", "expected"),
     [
         ("1.2.3", "1.2.3", "--patch", "1.2.4"),
         ("1.2.3", "1.2.3", "--minor", "1.3.0"),

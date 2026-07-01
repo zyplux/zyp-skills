@@ -12,7 +12,7 @@ FIXTURE_DIR = Path(__file__).parent
 # --- Preview (default mode) ---
 
 
-def test_default_output(invoke):
+def test_default_output(invoke) -> None:
     result = invoke()
     assert result.output == (
         "tourney_points[2]{tourney_category,tourney_level,round,round_of,points}:\n"
@@ -22,7 +22,7 @@ def test_default_output(invoke):
     )
 
 
-def test_n_1(invoke):
+def test_n_1(invoke) -> None:
     result = invoke("-n", "1")
     assert result.output == (
         "tourney_points[1]{tourney_category,tourney_level,round,round_of,points}:\n"
@@ -31,7 +31,7 @@ def test_n_1(invoke):
     )
 
 
-def test_n_5(invoke):
+def test_n_5(invoke) -> None:
     result = invoke("-n", "5")
     assert result.output == (
         "tourney_points[5]{tourney_category,tourney_level,round,round_of,points}:\n"
@@ -45,18 +45,18 @@ def test_n_5(invoke):
 
 
 @pytest.mark.parametrize("n", [3, 50])
-def test_preview_respects_n(invoke, decode, n):
+def test_preview_respects_n(invoke, decode, n) -> None:
     result = invoke("-n", str(n))
     assert len(decode(result.output.strip())["tourney_points"]) == min(n, 94)
 
 
 @pytest.mark.parametrize("n", [94, 200], ids=["exact", "overshoot"])
-def test_n_gte_total_hides_rows(invoke, n):
+def test_n_gte_total_hides_rows(invoke, n) -> None:
     result = invoke("-n", str(n))
     assert "rows" not in result.output
 
 
-def test_types_flag(invoke):
+def test_types_flag(invoke) -> None:
     result = invoke("-t")
     assert result.output == (
         "tourney_points[2]{tourney_category,tourney_level,round,round_of,points}:\n"
@@ -67,7 +67,7 @@ def test_types_flag(invoke):
     )
 
 
-def test_all_rows_no_row_count(invoke, decode):
+def test_all_rows_no_row_count(invoke, decode) -> None:
     result = invoke("-a")
     parsed = decode(result.output.strip())
     assert len(parsed["tourney_points"]) == 94
@@ -77,38 +77,26 @@ def test_all_rows_no_row_count(invoke, decode):
 # --- Column selection (--cols) ---
 
 
-def test_cols_select(invoke):
+def test_cols_select(invoke) -> None:
     result = invoke("--cols", "round,points")
-    assert result.output == (
-        "tourney_points[2]{round,points}:\n  F,2000\n  SF,800\nrows: 94\n"
-    )
+    assert result.output == ("tourney_points[2]{round,points}:\n  F,2000\n  SF,800\nrows: 94\n")
 
 
-def test_cols_with_n(invoke):
+def test_cols_with_n(invoke) -> None:
     result = invoke("--cols", "round,points", "-n", "5")
     assert result.output == (
-        "tourney_points[5]{round,points}:\n"
-        "  F,2000\n"
-        "  SF,800\n"
-        "  QF,400\n"
-        "  R16,200\n"
-        "  R32,100\n"
-        "rows: 94\n"
+        "tourney_points[5]{round,points}:\n  F,2000\n  SF,800\n  QF,400\n  R16,200\n  R32,100\nrows: 94\n"
     )
 
 
-def test_cols_with_types(invoke):
+def test_cols_with_types(invoke) -> None:
     result = invoke("--cols", "round,points", "-t")
     assert result.output == (
-        "tourney_points[2]{round,points}:\n"
-        "  F,2000\n"
-        "  SF,800\n"
-        "types[2]: VARCHAR,INTEGER\n"
-        "rows: 94\n"
+        "tourney_points[2]{round,points}:\n  F,2000\n  SF,800\ntypes[2]: VARCHAR,INTEGER\nrows: 94\n"
     )
 
 
-def test_cols_with_all_rows(invoke, decode):
+def test_cols_with_all_rows(invoke, decode) -> None:
     result = invoke("--cols", "round", "-a")
     parsed = decode(result.output.strip())
     assert len(parsed["tourney_points"]) == 94
@@ -118,7 +106,7 @@ def test_cols_with_all_rows(invoke, decode):
 # --- Describe mode (-d) ---
 
 
-def test_describe_mode(invoke):
+def test_describe_mode(invoke) -> None:
     result = invoke("-d")
     assert result.output == (
         "tourney_points{5 cols, 94 rows}:\n"
@@ -130,13 +118,13 @@ def test_describe_mode(invoke):
     )
 
 
-def test_describe_numeric_has_quartiles(invoke):
+def test_describe_numeric_has_quartiles(invoke) -> None:
     result = invoke("-d")
     for key in ("q25=", "q50=", "q75="):
         assert key in result.output
 
 
-def test_describe_glob_multiple(runner, peek):
+def test_describe_glob_multiple(runner, peek) -> None:
     pattern = str(FIXTURE_DIR / "*.parquet")
     result = runner.invoke(peek.app, ["-d", pattern])
     assert result.exit_code == 0
@@ -149,7 +137,7 @@ def test_describe_glob_multiple(runner, peek):
 # --- Schema mode (-c) ---
 
 
-def test_schema_mode(invoke):
+def test_schema_mode(invoke) -> None:
     result = invoke("-c")
     assert result.output == (
         "tourney_points:\n"
@@ -165,12 +153,12 @@ def test_schema_mode(invoke):
 # --- Unique mode (-u) ---
 
 
-def test_unique_single_column(invoke):
+def test_unique_single_column(invoke) -> None:
     result = invoke("-u", "round")
     assert result.output == "round[11]: F,Q1,Q2,Q3,QF,R128,R16,R32,R64,RR,SF\n"
 
 
-def test_unique_multiple_columns(invoke):
+def test_unique_multiple_columns(invoke) -> None:
     result = invoke("-u", "round,tourney_category")
     assert result.output == (
         "round[11]: F,Q1,Q2,Q3,QF,R128,R16,R32,R64,RR,SF\n"
@@ -184,7 +172,7 @@ def test_unique_multiple_columns(invoke):
 # --- Group-by mode (-g) ---
 
 
-def test_groupby_single_column(invoke):
+def test_groupby_single_column(invoke) -> None:
     result = invoke("-g", "round")
     assert result.output == (
         "group[11]{round,len}:\n"
@@ -202,7 +190,7 @@ def test_groupby_single_column(invoke):
     )
 
 
-def test_groupby_multiple_columns(invoke):
+def test_groupby_multiple_columns(invoke) -> None:
     result = invoke("-g", "tourney_category,round")
     assert result.output.startswith("group[94]{tourney_category,round,len}:\n")
     assert "  Grand Slam,F,1\n" in result.output
@@ -211,7 +199,7 @@ def test_groupby_multiple_columns(invoke):
 # --- SQL mode (-q) ---
 
 
-def test_sql_groupby(invoke):
+def test_sql_groupby(invoke) -> None:
     result = invoke(
         "-q",
         "SELECT round, COUNT(*) as cnt FROM t GROUP BY round ORDER BY cnt DESC, round",
@@ -232,7 +220,7 @@ def test_sql_groupby(invoke):
     )
 
 
-def test_sql_where(invoke):
+def test_sql_where(invoke) -> None:
     result = invoke("-q", "SELECT * FROM t WHERE tourney_category = 'Grand Slam'")
     assert result.output == (
         "result[10]{tourney_category,tourney_level,round,round_of,points}:\n"
@@ -249,7 +237,7 @@ def test_sql_where(invoke):
     )
 
 
-def test_sql_limit(invoke):
+def test_sql_limit(invoke) -> None:
     result = invoke("-q", "SELECT * FROM t LIMIT 3")
     assert result.output == (
         "result[3]{tourney_category,tourney_level,round,round_of,points}:\n"
@@ -262,7 +250,7 @@ def test_sql_limit(invoke):
 # --- Multi-file SQL mode ---
 
 
-def test_sql_multi_file_t1_t2(runner, peek):
+def test_sql_multi_file_t1_t2(runner, peek) -> None:
     players = str(FIXTURE_DIR / "players.parquet")
     points = str(FIXTURE_DIR / "tourney_points.parquet")
     result = runner.invoke(
@@ -275,12 +263,10 @@ def test_sql_multi_file_t1_t2(runner, peek):
         ],
     )
     assert result.exit_code == 0
-    assert result.output == (
-        "result[3]{player,wins}:\n  Federer,103\n  Djokovic,98\n  Nadal,92\n"
-    )
+    assert result.output == ("result[3]{player,wins}:\n  Federer,103\n  Djokovic,98\n  Nadal,92\n")
 
 
-def test_sql_multi_file_cross_join(runner, peek):
+def test_sql_multi_file_cross_join(runner, peek) -> None:
     players = str(FIXTURE_DIR / "players.parquet")
     points = str(FIXTURE_DIR / "tourney_points.parquet")
     result = runner.invoke(
@@ -297,7 +283,7 @@ def test_sql_multi_file_cross_join(runner, peek):
     assert "282" in result.output
 
 
-def test_sql_single_file_t1_alias(invoke):
+def test_sql_single_file_t1_alias(invoke) -> None:
     result = invoke("-q", "SELECT COUNT(*) as cnt FROM t1")
     assert result.exit_code == 0
     assert "94" in result.output
@@ -306,7 +292,7 @@ def test_sql_single_file_t1_alias(invoke):
 # --- Glob support ---
 
 
-def test_glob_schema_multiple(runner, peek):
+def test_glob_schema_multiple(runner, peek) -> None:
     pattern = str(FIXTURE_DIR / "*.parquet")
     result = runner.invoke(peek.app, ["-c", pattern])
     assert result.output == (
@@ -326,7 +312,7 @@ def test_glob_schema_multiple(runner, peek):
     )
 
 
-def test_glob_preview_multiple(runner, peek):
+def test_glob_preview_multiple(runner, peek) -> None:
     pattern = str(FIXTURE_DIR / "*.parquet")
     result = runner.invoke(peek.app, [pattern])
     assert result.exit_code == 0
@@ -336,7 +322,7 @@ def test_glob_preview_multiple(runner, peek):
     assert blocks[1].startswith("tourney_points[2]")
 
 
-def test_glob_no_match(runner, peek):
+def test_glob_no_match(runner, peek) -> None:
     result = runner.invoke(peek.app, ["/nonexistent/*.parquet"])
     assert result.exit_code != 0
 
@@ -344,15 +330,13 @@ def test_glob_no_match(runner, peek):
 # --- Error handling ---
 
 
-def test_no_path_exits_with_error(runner, peek):
+def test_no_path_exits_with_error(runner, peek) -> None:
     result = runner.invoke(peek.app, [])
     assert result.exit_code != 0
 
 
-def test_nonexistent_file_exits_with_error(invoke):
-    result = invoke(
-        "--", "/nonexistent/file.parquet", use_fixture=False, expect_error=True
-    )
+def test_nonexistent_file_exits_with_error(invoke) -> None:
+    result = invoke("--", "/nonexistent/file.parquet", use_fixture=False, expect_error=True)
     assert result.exit_code != 0
 
 
@@ -370,17 +354,17 @@ def test_nonexistent_file_exits_with_error(invoke):
     ],
     ids=["c+u", "c+g", "c+q", "d+c", "d+u", "d+g", "d+q", "u+g"],
 )
-def test_mode_conflict(invoke, args):
+def test_mode_conflict(invoke, args) -> None:
     result = invoke(*args, expect_error=True)
     assert result.exit_code != 0
 
 
-def test_sql_error_bad_column(invoke):
+def test_sql_error_bad_column(invoke) -> None:
     result = invoke("-q", "SELECT nonexistent FROM t", expect_error=True)
     assert result.exit_code != 0
 
 
-def test_sql_error_bad_table(runner, peek):
+def test_sql_error_bad_table(runner, peek) -> None:
     points = str(FIXTURE_DIR / "tourney_points.parquet")
     result = runner.invoke(peek.app, ["-q", "SELECT * FROM t99", points])
     assert result.exit_code != 0

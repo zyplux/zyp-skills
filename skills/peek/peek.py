@@ -33,11 +33,13 @@ def _split_cols(s: str) -> list[str]:
 def _resolve_paths(pattern: str) -> list[Path]:
     matches = sorted(globmod.glob(pattern))
     if not matches:
-        raise typer.BadParameter(f"No files match: {pattern}")
+        msg = f"No files match: {pattern}"
+        raise typer.BadParameter(msg)
     paths = [Path(m) for m in matches]
     for p in paths:
         if not p.is_file():
-            raise typer.BadParameter(f"Not a file: {p}")
+            msg = f"Not a file: {p}"
+            raise typer.BadParameter(msg)
     return paths
 
 
@@ -53,7 +55,7 @@ def _connect(path: Path) -> duckdb.DuckDBPyConnection:
 
 def _to_dicts(con: duckdb.DuckDBPyConnection) -> list[dict]:
     columns = [desc[0] for desc in con.description]
-    return [dict(zip(columns, row)) for row in con.fetchall()]
+    return [dict(zip(columns, row, strict=False)) for row in con.fetchall()]
 
 
 def _describe(con: duckdb.DuckDBPyConnection) -> list[tuple[str, str]]:
@@ -64,9 +66,8 @@ def _describe(con: duckdb.DuckDBPyConnection) -> list[tuple[str, str]]:
 def _validate_columns(available: list[str], columns: list[str]) -> None:
     bad = [c for c in columns if c not in available]
     if bad:
-        raise typer.BadParameter(
-            f"Column(s) not found: {', '.join(bad)}. Available: {', '.join(available)}"
-        )
+        msg = f"Column(s) not found: {', '.join(bad)}. Available: {', '.join(available)}"
+        raise typer.BadParameter(msg)
 
 
 def _count(con: duckdb.DuckDBPyConnection) -> int:
@@ -126,9 +127,7 @@ def _describe_stats(con: duckdb.DuckDBPyConnection, stem: str) -> str:
     for row in rows:
         name, dtype = row[0], row[1]
         null_val = float(row[11])
-        null_str = (
-            f"{int(null_val)}%" if null_val == int(null_val) else f"{null_val:.1f}%"
-        )
+        null_str = f"{int(null_val)}%" if null_val == int(null_val) else f"{null_val:.1f}%"
         if row[5] is not None:
             parts = [
                 f"min={_fmt_num(row[2])}",
@@ -152,9 +151,7 @@ def _unique(con: duckdb.DuckDBPyConnection, columns: str) -> dict:
     output: dict = {}
     for col_name in col_list:
         rows = con.execute(
-            f'SELECT DISTINCT "{col_name}" FROM t '
-            f'WHERE "{col_name}" IS NOT NULL '
-            f'ORDER BY "{col_name}"'
+            f'SELECT DISTINCT "{col_name}" FROM t WHERE "{col_name}" IS NOT NULL ORDER BY "{col_name}"'
         ).fetchall()
         output[col_name] = [r[0] for r in rows]
     return output
@@ -165,23 +162,16 @@ def _groupby(con: duckdb.DuckDBPyConnection, columns: str) -> dict:
     desc = _describe(con)
     _validate_columns([name for name, _ in desc], col_list)
     col_expr = ", ".join(f'"{c}"' for c in col_list)
-    con.execute(
-        f"SELECT {col_expr}, COUNT(*) as len "
-        f"FROM t GROUP BY {col_expr} ORDER BY {col_expr}"
-    )
+    con.execute(f"SELECT {col_expr}, COUNT(*) as len FROM t GROUP BY {col_expr} ORDER BY {col_expr}")
     return {"group": _to_dicts(con)}
 
 
 def _register_tables(con: duckdb.DuckDBPyConnection, paths: list[Path]) -> list[str]:
     names = ["t"]
-    con.execute(
-        f"CREATE VIEW t AS SELECT * FROM read_parquet('{_escape_path(paths[0])}')"
-    )
+    con.execute(f"CREATE VIEW t AS SELECT * FROM read_parquet('{_escape_path(paths[0])}')")
     for i, p in enumerate(paths, 1):
         name = f"t{i}"
-        con.execute(
-            f"CREATE VIEW {name} AS SELECT * FROM read_parquet('{_escape_path(p)}')"
-        )
+        con.execute(f"CREATE VIEW {name} AS SELECT * FROM read_parquet('{_escape_path(p)}')")
         names.append(name)
     return names
 
@@ -207,30 +197,16 @@ def _sql(con: duckdb.DuckDBPyConnection, query: str, table_names: list[str]) -> 
 
 @app.command()
 def main(
-    path: Annotated[
-        list[str], typer.Argument(help="Path(s) or glob pattern(s) for parquet file(s)")
-    ],
+    path: Annotated[list[str], typer.Argument(help="Path(s) or glob pattern(s) for parquet file(s)")],
     n: Annotated[int, typer.Option("-n", help="Number of preview rows")] = 2,
     all_rows: Annotated[bool, typer.Option("-a", help="Show all rows")] = False,
     types: Annotated[bool, typer.Option("-t", help="Include column types")] = False,
-    schema: Annotated[
-        bool, typer.Option("-c", help="Show columns and types only")
-    ] = False,
-    describe: Annotated[
-        bool, typer.Option("-d", help="Describe columns with stats")
-    ] = False,
-    unique: Annotated[
-        str | None, typer.Option("-u", help="Show unique values of column(s)")
-    ] = None,
-    group: Annotated[
-        str | None, typer.Option("-g", help="Group-by column(s) with counts")
-    ] = None,
-    query: Annotated[
-        str | None, typer.Option("-q", help="SQL query (tables: t, t1, t2, ...)")
-    ] = None,
-    cols: Annotated[
-        str | None, typer.Option("--cols", help="Select columns for preview")
-    ] = None,
+    schema: Annotated[bool, typer.Option("-c", help="Show columns and types only")] = False,
+    describe: Annotated[bool, typer.Option("-d", help="Describe columns with stats")] = False,
+    unique: Annotated[str | None, typer.Option("-u", help="Show unique values of column(s)")] = None,
+    group: Annotated[str | None, typer.Option("-g", help="Group-by column(s) with counts")] = None,
+    query: Annotated[str | None, typer.Option("-q", help="SQL query (tables: t, t1, t2, ...)")] = None,
+    cols: Annotated[str | None, typer.Option("--cols", help="Select columns for preview")] = None,
     version: Annotated[
         bool | None,
         typer.Option(
@@ -244,7 +220,8 @@ def main(
     """Inspect parquet files — preview, schema, unique values, group-by, or SQL."""
     modes = [describe, schema, unique is not None, group is not None, query is not None]
     if sum(modes) > 1:
-        raise typer.BadParameter("Use only one mode at a time: -c, -d, -u, -g, or -q")
+        msg = "Use only one mode at a time: -c, -d, -u, -g, or -q"
+        raise typer.BadParameter(msg)
 
     paths: list[Path] = []
     for p in path:
@@ -269,9 +246,7 @@ def main(
         elif group is not None:
             typer.echo(encode(_groupby(con, group)))
         else:
-            typer.echo(
-                encode(_preview(con, stem, n, all_rows=all_rows, types=types, cols=cols))
-            )
+            typer.echo(encode(_preview(con, stem, n, all_rows=all_rows, types=types, cols=cols)))
 
         if i < len(paths) - 1:
             typer.echo()

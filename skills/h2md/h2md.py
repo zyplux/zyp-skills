@@ -19,10 +19,9 @@ import re
 import shutil
 import subprocess
 import tempfile
-from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 from urllib.parse import urlparse
 
 import httpx
@@ -31,6 +30,9 @@ from bs4 import BeautifulSoup, Tag
 from bs4.element import NavigableString
 from markdownify import MarkdownConverter
 from toon_format import decode, encode
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
 
 __version__ = "0.7.0"
 
@@ -61,9 +63,7 @@ INLINE_TAGS = {
 
 
 def _fetch(workspace: Path, url: str) -> None:
-    with httpx.Client(
-        follow_redirects=True, timeout=30, headers={"User-Agent": USER_AGENT}
-    ) as client:
+    with httpx.Client(follow_redirects=True, timeout=30, headers={"User-Agent": USER_AGENT}) as client:
         resp = client.get(url)
         resp.raise_for_status()
     (workspace / "raw.html").write_bytes(resp.content)
@@ -81,11 +81,9 @@ def _fetch(workspace: Path, url: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _build_flat_tabs(
-    soup: BeautifulSoup, labels: list[str], panels: Sequence[Tag | None]
-) -> Tag:
+def _build_flat_tabs(soup: BeautifulSoup, labels: list[str], panels: Sequence[Tag | None]) -> Tag:
     replacement = soup.new_tag("div", attrs={"class": "h2md-flattened-tabs"})
-    for label, panel in zip(labels, panels):
+    for label, panel in zip(labels, panels, strict=False):
         if not panel:
             continue
         heading = soup.new_tag("h4")
@@ -119,16 +117,9 @@ def _collapse_code_spans(soup: BeautifulSoup) -> None:
             continue
         if not code.find("span"):
             continue
-        lang_classes = [
-            c
-            for c in _classes_from_tag(code)
-            if c.startswith(("language-", "lang-", "highlight-"))
-        ]
+        lang_classes = [c for c in _classes_from_tag(code) if c.startswith(("language-", "lang-", "highlight-"))]
         line_spans = code.find_all("span", class_="line")
-        if line_spans:
-            text = "\n".join(_extract_line_span_text(ls) for ls in line_spans)
-        else:
-            text = code.get_text()
+        text = "\n".join(_extract_line_span_text(ls) for ls in line_spans) if line_spans else code.get_text()
         code.clear()
         code.string = text
         if lang_classes:
@@ -218,43 +209,27 @@ def _has_any_class(tag: Tag, class_set: set[str]) -> bool:
 
 
 def _flatten_class_tabs(soup: BeautifulSoup) -> None:
-    for container in soup.find_all(
-        lambda t: isinstance(t, Tag) and _has_any_class(t, _TAB_CONTAINER_CLS)
-    ):
+    for container in soup.find_all(lambda t: isinstance(t, Tag) and _has_any_class(t, _TAB_CONTAINER_CLS)):
         if container.find(attrs={"role": "tablist"}):
             continue
 
-        buttons = container.find_all(
-            lambda t: isinstance(t, Tag) and _has_any_class(t, _TAB_BUTTON_CLS)
-        )
+        buttons = container.find_all(lambda t: isinstance(t, Tag) and _has_any_class(t, _TAB_BUTTON_CLS))
         if not buttons:
             all_children = [c for c in container.children if isinstance(c, Tag)]
             nav = next(
-                (
-                    c
-                    for c in all_children
-                    if c.name in ("nav", "ul", "div") and not c.find("pre")
-                ),
+                (c for c in all_children if c.name in {"nav", "ul", "div"} and not c.find("pre")),
                 None,
             )
             if nav:
-                buttons = [
-                    c
-                    for c in nav.descendants
-                    if isinstance(c, Tag) and c.string and c.string.strip()
-                ]
+                buttons = [c for c in nav.descendants if isinstance(c, Tag) and c.string and c.string.strip()]
 
         labels = [b.get_text(strip=True) for b in buttons]
         if not labels:
             continue
 
-        panels = container.find_all(
-            lambda t: isinstance(t, Tag) and _has_any_class(t, _TAB_PANEL_CLS)
-        )
+        panels = container.find_all(lambda t: isinstance(t, Tag) and _has_any_class(t, _TAB_PANEL_CLS))
         if not panels:
-            panels = [
-                c for c in container.children if isinstance(c, Tag) and c.find("pre")
-            ]
+            panels = [c for c in container.children if isinstance(c, Tag) and c.find("pre")]
 
         if not panels:
             continue
@@ -288,7 +263,7 @@ def _clean_code_containers(soup: BeautifulSoup) -> None:
         parent = pre.parent
         if not parent or not isinstance(parent, Tag):
             continue
-        if parent.name in ("body", "article", "main", "section"):
+        if parent.name in {"body", "article", "main", "section"}:
             continue
         children = [c for c in parent.children if isinstance(c, Tag)]
         if len(children) < 2:
@@ -296,7 +271,7 @@ def _clean_code_containers(soup: BeautifulSoup) -> None:
         for sibling in list(parent.children):
             if sibling is pre or not isinstance(sibling, Tag):
                 continue
-            if sibling.name in ("code", "pre"):
+            if sibling.name in {"code", "pre"}:
                 continue
             if sibling.find("pre"):
                 continue
@@ -319,9 +294,7 @@ _COPY_CLS = {
 def _strip_copy_elements(soup: BeautifulSoup) -> None:
     for pre in soup.find_all("pre"):
         container = pre.parent if pre.parent and isinstance(pre.parent, Tag) else pre
-        for el in container.find_all(
-            lambda t: isinstance(t, Tag) and _has_any_class(t, _COPY_CLS)
-        ):
+        for el in container.find_all(lambda t: isinstance(t, Tag) and _has_any_class(t, _COPY_CLS)):
             el.decompose()
 
 
@@ -408,9 +381,7 @@ def _extract_metadata(soup: BeautifulSoup) -> dict:
         except json.JSONDecodeError, TypeError:
             continue
         if isinstance(data, list):
-            data = next(
-                (d for d in data if d.get("@type") in _JSONLD_ARTICLE_TYPES), {}
-            )
+            data = next((d for d in data if d.get("@type") in _JSONLD_ARTICLE_TYPES), {})
         if data.get("@type") not in _JSONLD_ARTICLE_TYPES:
             continue
         meta.setdefault("title", data.get("headline"))
@@ -418,9 +389,7 @@ def _extract_metadata(soup: BeautifulSoup) -> dict:
         if isinstance(author, dict):
             meta.setdefault("author", author.get("name"))
         elif isinstance(author, list) and author:
-            names = [
-                a.get("name", str(a)) if isinstance(a, dict) else str(a) for a in author
-            ]
+            names = [a.get("name", str(a)) if isinstance(a, dict) else str(a) for a in author]
             meta.setdefault("author", ", ".join(n for n in names if n))
         meta.setdefault("date", data.get("datePublished"))
         meta.setdefault("description", data.get("description"))
@@ -492,9 +461,7 @@ def _assets(workspace: Path, *, no_assets: bool) -> None:
     assets_dir.mkdir(exist_ok=True)
     downloaded = 0
 
-    with httpx.Client(
-        follow_redirects=True, timeout=30, headers={"User-Agent": USER_AGENT}
-    ) as client:
+    with httpx.Client(follow_redirects=True, timeout=30, headers={"User-Agent": USER_AGENT}) as client:
         for img in imgs:
             src = str(img.get("src", ""))
             if not src or src.startswith("data:"):
@@ -521,9 +488,7 @@ def _assets(workspace: Path, *, no_assets: bool) -> None:
 LANG_PATTERNS: list[tuple[re.Pattern, str]] = [
     (re.compile(r"^\[[\w.-]+\]", re.MULTILINE), "toml"),
     (
-        re.compile(
-            r"^(curl|bun|npm|npx|docker|brew|apt|pip|yarn|pnpm|deno)\b", re.MULTILINE
-        ),
+        re.compile(r"^(curl|bun|npm|npx|docker|brew|apt|pip|yarn|pnpm|deno)\b", re.MULTILINE),
         "bash",
     ),
     (re.compile(r"^\s*[\[{]"), "json"),
@@ -739,8 +704,7 @@ _FRONTMATTER_RE = re.compile(r"\A---\n.*?^---", re.MULTILINE | re.DOTALL)
 def _exclusion_zones(md: str) -> list[tuple[int, int]]:
     zones: list[tuple[int, int]] = []
     for pattern in (_FENCE_RE, _MD_LINK_URL_RE, _INLINE_CODE_RE, _FRONTMATTER_RE):
-        for m in pattern.finditer(md):
-            zones.append((m.start(), m.end()))
+        zones.extend((m.start(), m.end()) for m in pattern.finditer(md))
     zones.sort()
     return zones
 
@@ -810,9 +774,7 @@ def _lint(workspace: Path) -> None:
 
     rumdl = shutil.which("rumdl")
     if rumdl is None:
-        (workspace / "lint.report.txt").write_text(
-            "rumdl not found on PATH, skipping lint\n"
-        )
+        (workspace / "lint.report.txt").write_text("rumdl not found on PATH, skipping lint\n")
         return
 
     config = Path(__file__).resolve().parent / ".rumdl.toml"
@@ -847,38 +809,32 @@ def _detect(workspace: Path) -> list[dict]:
             continue
         line_num = md[: m.start()].count("\n") + 1
         ctx = _context_around(md, m.start(), m.end())
-        issues.append(
-            {
-                "type": "fused text",
-                "line": line_num,
-                "find": ctx,
-                "fix": "verify whitespace between tokens",
-            }
-        )
+        issues.append({
+            "type": "fused text",
+            "line": line_num,
+            "find": ctx,
+            "fix": "verify whitespace between tokens",
+        })
 
     for m in _HTML_LEAK_RE.finditer(md):
         line_num = md[: m.start()].count("\n") + 1
         ctx = _context_around(md, m.start(), m.end())
-        issues.append(
-            {
-                "type": "HTML leakage",
-                "line": line_num,
-                "find": ctx,
-                "fix": "remove or convert to markdown",
-            }
-        )
+        issues.append({
+            "type": "HTML leakage",
+            "line": line_num,
+            "find": ctx,
+            "fix": "remove or convert to markdown",
+        })
 
     for m in _EMPTY_BLOCK_RE.finditer(md):
         line_num = md[: m.start()].count("\n") + 1
         ctx = _context_around(md, m.start(), m.end(), 20)
-        issues.append(
-            {
-                "type": "empty code block",
-                "line": line_num,
-                "find": ctx,
-                "fix": "remove empty fence",
-            }
-        )
+        issues.append({
+            "type": "empty code block",
+            "line": line_num,
+            "find": ctx,
+            "fix": "remove empty fence",
+        })
 
     for m in _FENCE_LANG_RE.finditer(md):
         lang = m.group(1)
@@ -890,31 +846,23 @@ def _detect(workspace: Path) -> list[dict]:
         sniffed = _sniff_language(content)
         if sniffed != "text":
             line_num = md[: m.start()].count("\n") + 1
-            issues.append(
-                {
-                    "type": "wrong language",
-                    "line": line_num,
-                    "detected": sniffed,
-                    "fix": f"change fence to ```{sniffed}",
-                }
-            )
+            issues.append({
+                "type": "wrong language",
+                "line": line_num,
+                "detected": sniffed,
+                "fix": f"change fence to ```{sniffed}",
+            })
 
     lines = md.split("\n")
     for i, line in enumerate(lines[:-1]):
-        if (
-            _TAB_LABEL_RE.match(line.strip())
-            and i + 1 < len(lines)
-            and lines[i + 1].strip().startswith("```")
-        ):
+        if _TAB_LABEL_RE.match(line.strip()) and i + 1 < len(lines) and lines[i + 1].strip().startswith("```"):
             ctx = f"{line.strip()}\\n{lines[i + 1].strip()}"
-            issues.append(
-                {
-                    "type": "suspicious tab label",
-                    "line": i + 1,
-                    "find": ctx,
-                    "fix": "merge as prose prefix or remove",
-                }
-            )
+            issues.append({
+                "type": "suspicious tab label",
+                "line": i + 1,
+                "find": ctx,
+                "fix": "merge as prose prefix or remove",
+            })
 
     return issues
 
@@ -954,22 +902,14 @@ def _postprocess(workspace: Path) -> tuple[list[dict], list[dict]]:
 # ---------------------------------------------------------------------------
 
 
-def _handoff(
-    workspace: Path, url: str, issues: list[dict], sections: list[dict]
-) -> None:
+def _handoff(workspace: Path, url: str, issues: list[dict], sections: list[dict]) -> None:
     meta_path = workspace / "meta.toon"
     meta = decode(meta_path.read_text()) if meta_path.exists() else {}
     if not isinstance(meta, dict):
         meta = {}
     lint_path = workspace / "lint.report.txt"
     lint_text = lint_path.read_text() if lint_path.exists() else ""
-    lint_remaining = len(
-        [
-            ln
-            for ln in lint_text.strip().split("\n")
-            if ln.strip() and "not found" not in ln.lower()
-        ]
-    )
+    lint_remaining = len([ln for ln in lint_text.strip().split("\n") if ln.strip() and "not found" not in ln.lower()])
 
     output: dict = {
         "h2md": {
@@ -984,9 +924,7 @@ def _handoff(
     }
     if issues:
         output["issues"] = issues
-        output["next"] = (
-            "Edit article.md to fix issues. Cross-reference article.html for fidelity."
-        )
+        output["next"] = "Edit article.md to fix issues. Cross-reference article.html for fidelity."
     else:
         output["next"] = "Article is clean. Read article.md."
     typer.echo(encode(output))
@@ -1006,30 +944,19 @@ def _version_callback(*, value: bool) -> None:
 @app.command()
 def main(
     url: Annotated[str, typer.Argument(help="URL of the article to convert")],
-    no_assets: Annotated[
-        bool, typer.Option("--no-assets", help="Skip image download")
-    ] = False,
-    js: Annotated[
-        bool, typer.Option("--js", help="JS rendering (requires playwright)")
-    ] = False,
-    selector: Annotated[
-        str | None, typer.Option("--selector", help="CSS selector for extraction")
-    ] = None,
-    copy_to: Annotated[
-        str | None, typer.Option("--copy-to", help="Copy article.md to this path")
-    ] = None,
+    no_assets: Annotated[bool, typer.Option("--no-assets", help="Skip image download")] = False,
+    js: Annotated[bool, typer.Option("--js", help="JS rendering (requires playwright)")] = False,
+    selector: Annotated[str | None, typer.Option("--selector", help="CSS selector for extraction")] = None,
+    copy_to: Annotated[str | None, typer.Option("--copy-to", help="Copy article.md to this path")] = None,
     version: Annotated[
         bool | None,
-        typer.Option(
-            "--version", callback=_version_callback, is_eager=True, help="Show version"
-        ),
+        typer.Option("--version", callback=_version_callback, is_eager=True, help="Show version"),
     ] = None,
 ) -> None:
     """Convert a web article to clean, faithful markdown."""
     if js:
-        raise typer.BadParameter(
-            "JS rendering requires playwright which is not installed"
-        )
+        msg = "JS rendering requires playwright which is not installed"
+        raise typer.BadParameter(msg)
 
     workspace = Path(tempfile.mkdtemp(prefix="h2md_"))
 
