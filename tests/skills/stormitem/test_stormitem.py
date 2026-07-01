@@ -62,8 +62,8 @@ def test_validate_feature_rejects(stormitem):
 
 
 def test_resolve_repo_known(stormitem):
-    owner, features = stormitem._resolve_repo("totvibe-skills")
-    assert owner == "realSergiy"
+    owner, features = stormitem._resolve_repo("zyp-skills")
+    assert owner == "zyplux"
     assert "stormitem" in features
 
 
@@ -174,7 +174,7 @@ def test_render_issue_includes_stormitem_block(stormitem):
         "feat(peek): julia",
         {"labels": ["enhancement"]},
         {
-            "repo": "totvibe-skills",
+            "repo": "zyp-skills",
             "kind": "feat",
             "feature": "peek",
             "title": "julia",
@@ -188,7 +188,7 @@ def test_render_issue_includes_stormitem_block(stormitem):
     fm = yaml.safe_load(fm_text[len("---\n"):])
     assert fm["title"] == "feat(peek): julia"
     assert fm["labels"] == ["enhancement"]
-    assert fm["stormitem"]["repo"] == "totvibe-skills"
+    assert fm["stormitem"]["repo"] == "zyp-skills"
     assert fm["stormitem"]["slug"] == "feat_peek_julia"
     assert "Add Julia." in body
 
@@ -197,7 +197,7 @@ def test_render_issue_skips_absent_metadata(stormitem):
     rendered = stormitem._render_issue(
         "feat(peek): x",
         {},
-        {"repo": "totvibe-skills", "kind": "feat", "feature": "peek", "title": "x", "slug": "s", "template_used": "builtin:feat"},
+        {"repo": "zyp-skills", "kind": "feat", "feature": "peek", "title": "x", "slug": "s", "template_used": "builtin:feat"},
         "body\n",
     )
     fm_text = rendered.split("\n---\n", 1)[0][len("---\n"):]
@@ -211,7 +211,7 @@ def test_render_issue_skips_absent_metadata(stormitem):
 
 def test_pull_writes_issue_md_with_frontmatter(invoke, builtin_only, decode, tmp_path, monkeypatch):
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
-    result = invoke("pull", "totvibe-skills", "--kind", "feat", "--feature", "peek", "--title", "support julia")
+    result = invoke("pull", "zyp-skills", "--kind", "feat", "--feature", "peek", "--title", "support julia")
     parsed = decode(result.output.strip())
     assert isinstance(parsed, dict)
     assert parsed["slug"] == "feat_peek_support_julia"
@@ -229,7 +229,7 @@ def test_pull_writes_issue_md_with_frontmatter(invoke, builtin_only, decode, tmp
 
 def test_pull_dir_starts_with_prefix(invoke, builtin_only, decode, tmp_path, monkeypatch):
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
-    result = invoke("pull", "totvibe-skills", "--kind", "fix", "--feature", "h2md", "--title", "empty body")
+    result = invoke("pull", "zyp-skills", "--kind", "fix", "--feature", "h2md", "--title", "empty body")
     parsed = decode(result.output.strip())
     assert Path(parsed["dir"]).name.startswith("stormitem-fix_h2md_empty_body-")
     assert parsed["template_used"] == "builtin:fix"
@@ -237,7 +237,7 @@ def test_pull_dir_starts_with_prefix(invoke, builtin_only, decode, tmp_path, mon
 
 def test_pull_uses_default_template_for_unknown_kind(invoke, builtin_only, decode, tmp_path, monkeypatch):
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
-    result = invoke("pull", "totvibe-skills", "--kind", "perf", "--feature", "peek", "--title", "speed up")
+    result = invoke("pull", "zyp-skills", "--kind", "perf", "--feature", "peek", "--title", "speed up")
     parsed = decode(result.output.strip())
     assert parsed["template_used"] == "builtin:_default"
 
@@ -248,19 +248,19 @@ def test_pull_unknown_repo_fails(invoke):
 
 
 def test_pull_unknown_feature_fails(invoke):
-    result = invoke("pull", "totvibe-skills", "--kind", "feat", "--feature", "nope", "--title", "y", expect_error=True)
+    result = invoke("pull", "zyp-skills", "--kind", "feat", "--feature", "nope", "--title", "y", expect_error=True)
     assert result.exit_code != 0
 
 
 def test_pull_invalid_kind_fails(invoke):
-    result = invoke("pull", "totvibe-skills", "--kind", "FEAT", "--feature", "peek", "--title", "y", expect_error=True)
+    result = invoke("pull", "zyp-skills", "--kind", "FEAT", "--feature", "peek", "--title", "y", expect_error=True)
     assert result.exit_code != 0
 
 
 # --- Post command ----------------------------------------------------------
 
 
-def _make_workdir(tmp_path: Path, *, slug: str = "feat_peek_julia", repo: str = "totvibe-skills") -> Path:
+def _make_workdir(tmp_path: Path, *, slug: str = "feat_peek_julia", repo: str = "zyp-skills") -> Path:
     work = tmp_path / "stormitem-work"
     work.mkdir(parents=True)
     fm = {
@@ -301,7 +301,7 @@ def test_post_pr_mode_full_flow(invoke, stormitem, decode, monkeypatch, tmp_path
     monkeypatch.setattr(
         stormitem,
         "_create_issue",
-        rec.make("issue", returns="https://github.com/realSergiy/totvibe-skills/issues/42"),
+        rec.make("issue", returns="https://github.com/zyplux/zyp-skills/issues/42"),
     )
     monkeypatch.setattr(stormitem, "_default_branch", rec.make("default", returns="main"))
     monkeypatch.setattr(stormitem, "_ref_sha", rec.make("sha", returns="abc123"))
@@ -310,16 +310,16 @@ def test_post_pr_mode_full_flow(invoke, stormitem, decode, monkeypatch, tmp_path
     monkeypatch.setattr(
         stormitem,
         "_create_pr",
-        rec.make("pr", returns="https://github.com/realSergiy/totvibe-skills/pull/43"),
+        rec.make("pr", returns="https://github.com/zyplux/zyp-skills/pull/43"),
     )
     monkeypatch.setattr(stormitem, "_edit_issue", rec.make("link", returns=None))
 
-    result = invoke("post", "totvibe-skills", str(work))
+    result = invoke("post", "zyp-skills", str(work))
     parsed = decode(result.output.strip())
     assert parsed == {
         "number": 42,
-        "url": "https://github.com/realSergiy/totvibe-skills/issues/42",
-        "plan_url": "https://github.com/realSergiy/totvibe-skills/pull/43",
+        "url": "https://github.com/zyplux/zyp-skills/issues/42",
+        "plan_url": "https://github.com/zyplux/zyp-skills/pull/43",
         "pr_number": 43,
         "mode": "pr",
         "template_used": "builtin:feat",
@@ -338,15 +338,15 @@ def test_post_pr_mode_cleans_non_tmp_dir(invoke, stormitem, monkeypatch, tmp_pat
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(fake_tmp))
     work = _make_workdir(tmp_path / "elsewhere")
     monkeypatch.setattr(stormitem, "_detect_push", lambda owner, repo: True)
-    monkeypatch.setattr(stormitem, "_create_issue", lambda *a, **k: "https://github.com/realSergiy/totvibe-skills/issues/1")
+    monkeypatch.setattr(stormitem, "_create_issue", lambda *a, **k: "https://github.com/zyplux/zyp-skills/issues/1")
     monkeypatch.setattr(stormitem, "_default_branch", lambda *a, **k: "main")
     monkeypatch.setattr(stormitem, "_ref_sha", lambda *a, **k: "sha")
     monkeypatch.setattr(stormitem, "_create_branch", lambda *a, **k: None)
     monkeypatch.setattr(stormitem, "_put_file", lambda *a, **k: None)
-    monkeypatch.setattr(stormitem, "_create_pr", lambda *a, **k: "https://github.com/realSergiy/totvibe-skills/pull/2")
+    monkeypatch.setattr(stormitem, "_create_pr", lambda *a, **k: "https://github.com/zyplux/zyp-skills/pull/2")
     monkeypatch.setattr(stormitem, "_edit_issue", lambda *a, **k: None)
 
-    invoke("post", "totvibe-skills", str(work))
+    invoke("post", "zyp-skills", str(work))
     assert not work.exists()
 
 
@@ -357,7 +357,7 @@ def test_post_pr_mode_keeps_tmp_dir(invoke, stormitem, monkeypatch, tmp_path):
     fm = {
         "title": "feat(peek): julia",
         "stormitem": {
-            "repo": "totvibe-skills",
+            "repo": "zyp-skills",
             "kind": "feat",
             "feature": "peek",
             "title": "julia",
@@ -370,15 +370,15 @@ def test_post_pr_mode_keeps_tmp_dir(invoke, stormitem, monkeypatch, tmp_path):
     (work / "plan.md").write_text("plan\n")
 
     monkeypatch.setattr(stormitem, "_detect_push", lambda owner, repo: True)
-    monkeypatch.setattr(stormitem, "_create_issue", lambda *a, **k: "https://github.com/realSergiy/totvibe-skills/issues/1")
+    monkeypatch.setattr(stormitem, "_create_issue", lambda *a, **k: "https://github.com/zyplux/zyp-skills/issues/1")
     monkeypatch.setattr(stormitem, "_default_branch", lambda *a, **k: "main")
     monkeypatch.setattr(stormitem, "_ref_sha", lambda *a, **k: "sha")
     monkeypatch.setattr(stormitem, "_create_branch", lambda *a, **k: None)
     monkeypatch.setattr(stormitem, "_put_file", lambda *a, **k: None)
-    monkeypatch.setattr(stormitem, "_create_pr", lambda *a, **k: "https://github.com/realSergiy/totvibe-skills/pull/2")
+    monkeypatch.setattr(stormitem, "_create_pr", lambda *a, **k: "https://github.com/zyplux/zyp-skills/pull/2")
     monkeypatch.setattr(stormitem, "_edit_issue", lambda *a, **k: None)
 
-    invoke("post", "totvibe-skills", str(work))
+    invoke("post", "zyp-skills", str(work))
     assert work.exists()
 
 
@@ -394,14 +394,14 @@ def test_post_gist_mode_full_flow(invoke, stormitem, decode, monkeypatch, tmp_pa
     monkeypatch.setattr(
         stormitem,
         "_create_issue",
-        rec.make("issue", returns="https://github.com/realSergiy/totvibe-skills/issues/77"),
+        rec.make("issue", returns="https://github.com/zyplux/zyp-skills/issues/77"),
     )
 
-    result = invoke("post", "totvibe-skills", str(work))
+    result = invoke("post", "zyp-skills", str(work))
     parsed = decode(result.output.strip())
     assert parsed == {
         "number": 77,
-        "url": "https://github.com/realSergiy/totvibe-skills/issues/77",
+        "url": "https://github.com/zyplux/zyp-skills/issues/77",
         "plan_url": "https://gist.github.com/realSergiy/abcdef",
         "pr_number": None,
         "mode": "gist",
@@ -417,21 +417,21 @@ def test_post_missing_issue_md_fails(invoke, tmp_path):
     work = tmp_path / "incomplete"
     work.mkdir()
     (work / "plan.md").write_text("plan\n")
-    result = invoke("post", "totvibe-skills", str(work), expect_error=True)
+    result = invoke("post", "zyp-skills", str(work), expect_error=True)
     assert result.exit_code != 0
 
 
 def test_post_missing_plan_md_fails(invoke, tmp_path):
     work = tmp_path / "incomplete"
     work.mkdir()
-    (work / "issue.md").write_text("---\nstormitem: {repo: totvibe-skills}\n---\n\nbody\n")
-    result = invoke("post", "totvibe-skills", str(work), expect_error=True)
+    (work / "issue.md").write_text("---\nstormitem: {repo: zyp-skills}\n---\n\nbody\n")
+    result = invoke("post", "zyp-skills", str(work), expect_error=True)
     assert result.exit_code != 0
 
 
 def test_post_repo_mismatch_fails(invoke, tmp_path):
     work = _make_workdir(tmp_path, repo="other-repo")
-    result = invoke("post", "totvibe-skills", str(work), expect_error=True)
+    result = invoke("post", "zyp-skills", str(work), expect_error=True)
     assert result.exit_code != 0
 
 
@@ -440,7 +440,7 @@ def test_post_missing_stormitem_block_fails(invoke, tmp_path):
     work.mkdir()
     (work / "issue.md").write_text("---\ntitle: x\n---\n\nbody\n")
     (work / "plan.md").write_text("plan\n")
-    result = invoke("post", "totvibe-skills", str(work), expect_error=True)
+    result = invoke("post", "zyp-skills", str(work), expect_error=True)
     assert result.exit_code != 0
 
 
@@ -502,9 +502,9 @@ def test_registry_command_lists_repos(invoke, decode):
     parsed = decode(result.output.strip())
     assert "repos" in parsed
     names = {row["repo"] for row in parsed["repos"]}
-    assert "totvibe-skills" in names
-    totvibe = next(row for row in parsed["repos"] if row["repo"] == "totvibe-skills")
-    assert totvibe["owner"] == "realSergiy"
+    assert "zyp-skills" in names
+    totvibe = next(row for row in parsed["repos"] if row["repo"] == "zyp-skills")
+    assert totvibe["owner"] == "zyplux"
     assert "stormitem" in totvibe["features"]
 
 
@@ -516,18 +516,18 @@ SKILLS_DIR = REPO_ROOT / "skills"
 
 
 def test_registry_features_match_skills_dir(stormitem):
-    """The registry's `totvibe-skills` features must match `os.listdir(skills/)`."""
+    """The registry's `zyp-skills` features must match `os.listdir(skills/)`."""
     on_disk = sorted(
         p.name for p in SKILLS_DIR.iterdir()
         if p.is_dir() and (p / "SKILL.md").exists()
     )
-    _, registered = stormitem._resolve_repo("totvibe-skills")
+    _, registered = stormitem._resolve_repo("zyp-skills")
     assert sorted(registered) == on_disk, (
-        f"registry/totvibe-skills features {sorted(registered)} drifted from "
+        f"registry/zyp-skills features {sorted(registered)} drifted from "
         f"on-disk skills {on_disk}. Update skills/stormitem/registry.toml."
     )
 
 
 def test_registry_sane_owner(stormitem):
-    owner, _ = stormitem._resolve_repo("totvibe-skills")
-    assert owner == "realSergiy"
+    owner, _ = stormitem._resolve_repo("zyp-skills")
+    assert owner == "zyplux"

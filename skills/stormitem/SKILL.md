@@ -71,12 +71,12 @@ The CLI requires four pieces: `<repo>`, `--kind`, `--feature`, `--title`.
 
 - **repo** — short name, must be in the registry. Run
   `stormitem registry` if you need to inspect what's known. Today the
-  registry covers `totvibe-skills`.
+  registry covers `zyp-skills`.
 - **kind** — Conventional Commits type: `feat`, `fix`, `docs`, `refactor`,
   `perf`, `chore`, `test`, `build`, `ci`, `style`, `revert`. Pick from
   the seed's intent.
 - **feature** — Conventional Commits scope; per-repo. For
-  `totvibe-skills` it's a skill name (`peek`, `mermaid`, etc.).
+  `zyp-skills` it's a skill name (`peek`, `mermaid`, etc.).
 - **title** — short imperative phrase describing the change. Spaces are
   fine; the CLI converts spaces to underscores in the slug and back to
   spaces in the PR title.
@@ -116,7 +116,7 @@ Example seed:
 > skill currently inspects parquet via DuckDB; Julia files (`.jl` source,
 > not data files) would be unrelated, so this is more about extending
 > `peek`'s scope to non-parquet inputs. Please storm this against
-> `<dir>/plan.md`. Treat it as a feature plan for the totvibe-skills
+> `<dir>/plan.md`. Treat it as a feature plan for the zyp-skills
 > repo, scope `peek`.
 
 `/plan-storm` runs its own protocol and stops at its default 95% readiness
@@ -192,8 +192,8 @@ Output is TOON:
 
 ```text
 number: 42
-url: https://github.com/realSergiy/totvibe-skills/issues/42
-plan_url: https://github.com/realSergiy/totvibe-skills/pull/43
+url: https://github.com/zyplux/zyp-skills/issues/42
+plan_url: https://github.com/zyplux/zyp-skills/pull/43
 pr_number: 43
 mode: pr
 template_used: builtin:feat

@@ -288,7 +288,7 @@ def _render_issue(
 
 @app.command()
 def pull(
-    repo: Annotated[str, typer.Argument(help="Short repo name (e.g. totvibe-skills)")],
+    repo: Annotated[str, typer.Argument(help="Short repo name (e.g. zyp-skills)")],
     kind: Annotated[str, typer.Option("--kind", help="Conventional Commits type (feat, fix, ...)")],
     feature: Annotated[str, typer.Option("--feature", help="Conventional Commits scope (per-repo)")],
     title: Annotated[str, typer.Option("--title", help="Issue title (raw text; spaces ok)")],
@@ -489,7 +489,7 @@ def _cleanup(work_dir: Path) -> None:
 
 @app.command()
 def post(
-    repo: Annotated[str, typer.Argument(help="Short repo name (e.g. totvibe-skills)")],
+    repo: Annotated[str, typer.Argument(help="Short repo name (e.g. zyp-skills)")],
     work_dir: Annotated[
         Path,
         typer.Argument(

@@ -1,4 +1,4 @@
-# totvibe-skills
+# zyp-skills
 
 A collection of skills for Claude Code.
 

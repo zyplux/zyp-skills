@@ -29,7 +29,7 @@ INSTALL_ROOT = Path.home() / ".agents" / "skills"
 ENV_D_DIR = Path.home() / ".config" / "environment.d"
 BASHRC = Path.home() / ".bashrc"
 ENV_FILE = "env.toml"
-DEFAULT_SOURCE = "github:realSergiy/totvibe-skills"
+DEFAULT_SOURCE = "github:zyplux/zyp-skills"
 
 
 class Runner(NamedTuple):
