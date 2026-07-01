@@ -20,9 +20,9 @@ __version__ = "0.8.0"
 app = typer.Typer()
 
 
-def _version_callback(value: bool) -> None:
+def _version_callback(*, value: bool) -> None:
     if value:
-        print(f"peek {__version__}")
+        typer.echo(f"peek {__version__}")
         raise typer.Exit
 
 
@@ -79,6 +79,7 @@ def _preview(
     con: duckdb.DuckDBPyConnection,
     stem: str,
     n: int,
+    *,
     all_rows: bool,
     types: bool,
     cols: str | None,
@@ -252,7 +253,7 @@ def main(
     if query is not None:
         con = duckdb.connect()
         table_names = _register_tables(con, paths)
-        print(encode(_sql(con, query, table_names)))
+        typer.echo(encode(_sql(con, query, table_names)))
         return
 
     for i, p in enumerate(paths):
@@ -260,18 +261,20 @@ def main(
         stem = p.stem
 
         if describe:
-            print(_describe_stats(con, stem))
+            typer.echo(_describe_stats(con, stem))
         elif schema:
-            print(encode(_schema(con, stem)))
+            typer.echo(encode(_schema(con, stem)))
         elif unique is not None:
-            print(encode(_unique(con, unique)))
+            typer.echo(encode(_unique(con, unique)))
         elif group is not None:
-            print(encode(_groupby(con, group)))
+            typer.echo(encode(_groupby(con, group)))
         else:
-            print(encode(_preview(con, stem, n, all_rows, types, cols)))
+            typer.echo(
+                encode(_preview(con, stem, n, all_rows=all_rows, types=types, cols=cols))
+            )
 
         if i < len(paths) - 1:
-            print()
+            typer.echo()
 
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ import subprocess
 import tempfile
 import tomllib
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, NamedTuple
 
 import typer
 import yaml
@@ -50,9 +50,29 @@ KIND_HINTS: dict[str, tuple[str, ...]] = {
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
 
-def _version_callback(value: bool) -> None:
+class Repo(NamedTuple):
+    """A resolved `owner/name` GitHub repo target."""
+
+    owner: str
+    name: str
+
+    @property
+    def slug(self) -> str:
+        return f"{self.owner}/{self.name}"
+
+
+class IssueDraft(NamedTuple):
+    """The content of an issue to be created on GitHub."""
+
+    title: str
+    body: str
+    labels: list[str]
+    assignees: list[str]
+
+
+def _version_callback(*, value: bool) -> None:
     if value:
-        print(f"stormitem {__version__}")
+        typer.echo(f"stormitem {__version__}")
         raise typer.Exit
 
 
@@ -80,22 +100,23 @@ def _load_registry() -> dict[str, Any]:
     return tomllib.loads(REGISTRY_PATH.read_text())
 
 
-def _resolve_repo(short: str) -> tuple[str, list[str]]:
+def _resolve_repo(short: str) -> tuple[Repo, list[str]]:
     reg = _load_registry()
     repos = reg.get("repos", {})
     if short not in repos:
         known = ", ".join(sorted(repos)) or "<empty>"
-        raise typer.BadParameter(f"unknown repo: {short!r}. Known: {known}")
+        msg = f"unknown repo: {short!r}. Known: {known}"
+        raise typer.BadParameter(msg)
     info = repos[short]
     owner = info.get("owner")
     if not isinstance(owner, str) or not owner:
-        raise typer.BadParameter(f"registry entry for {short!r} is missing `owner`")
+        msg = f"registry entry for {short!r} is missing `owner`"
+        raise typer.BadParameter(msg)
     features = info.get("features") or []
     if not isinstance(features, list):
-        raise typer.BadParameter(
-            f"registry entry for {short!r}: `features` must be a list"
-        )
-    return owner, [str(f) for f in features]
+        msg = f"registry entry for {short!r}: `features` must be a list"
+        raise typer.BadParameter(msg)
+    return Repo(owner, short), [str(f) for f in features]
 
 
 # ---------------------------------------------------------------------------
@@ -122,16 +143,14 @@ def _branch(slug: str) -> str:
 
 def _validate_kind(kind: str) -> None:
     if not KIND_RE.match(kind):
-        raise typer.BadParameter(
-            f"kind must match Conventional Commits (lowercase ASCII identifier): got {kind!r}"
-        )
+        msg = f"kind must match Conventional Commits (lowercase ASCII identifier): got {kind!r}"
+        raise typer.BadParameter(msg)
 
 
 def _validate_feature(feature: str, allowed: list[str]) -> None:
     if feature not in allowed:
-        raise typer.BadParameter(
-            f"feature {feature!r} is not registered. Known: {', '.join(allowed) or '<none>'}"
-        )
+        msg = f"feature {feature!r} is not registered. Known: {', '.join(allowed) or '<none>'}"
+        raise typer.BadParameter(msg)
 
 
 # ---------------------------------------------------------------------------
@@ -139,11 +158,26 @@ def _validate_feature(feature: str, allowed: list[str]) -> None:
 # ---------------------------------------------------------------------------
 
 
+class ToolNotFoundError(RuntimeError):
+    def __init__(self, tool: str) -> None:
+        super().__init__(f"`{tool}` not found on PATH")
+
+
 def _gh(
     *args: str, stdin: str | None = None, check: bool = True
 ) -> subprocess.CompletedProcess[str]:
+    """The single audited subprocess boundary for stormitem.
+
+    `gh` is resolved to an absolute path via PATH, the remaining args are
+    program-constructed (never user-derived), and the shell is never invoked, so
+    there is no command-injection surface.
+    """
+    tool = "gh"
+    executable = shutil.which(tool)
+    if executable is None:
+        raise ToolNotFoundError(tool)
     return subprocess.run(
-        ["gh", *args],
+        [executable, *args],
         input=stdin,
         capture_output=True,
         text=True,
@@ -151,7 +185,7 @@ def _gh(
     )
 
 
-def _gh_json(*args: str) -> Any:
+def _gh_json(*args: str) -> object:
     res = _gh(*args)
     out = res.stdout.strip()
     if not out:
@@ -164,11 +198,11 @@ def _gh_json(*args: str) -> Any:
 # ---------------------------------------------------------------------------
 
 
-def _fetch_template(owner: str, repo: str, kind: str) -> tuple[str, str]:
+def _fetch_template(target: Repo, kind: str) -> tuple[str, str]:
     listing: list[dict[str, Any]] = []
     try:
         payload = _gh_json(
-            "api", f"repos/{owner}/{repo}/contents/.github/ISSUE_TEMPLATE"
+            "api", f"repos/{target.slug}/contents/.github/ISSUE_TEMPLATE"
         )
     except subprocess.CalledProcessError:
         payload = None
@@ -180,7 +214,7 @@ def _fetch_template(owner: str, repo: str, kind: str) -> tuple[str, str]:
         ]
     chosen = _match_template(listing, kind)
     if chosen is not None:
-        body = _fetch_file(owner, repo, str(chosen["path"]))
+        body = _fetch_file(target, str(chosen["path"]))
         return f"remote:{chosen['name']}", body
     return _builtin_template(kind)
 
@@ -206,10 +240,11 @@ def _match_template(items: list[dict[str, Any]], kind: str) -> dict[str, Any] | 
     return None
 
 
-def _fetch_file(owner: str, repo: str, path: str) -> str:
-    payload = _gh_json("api", f"repos/{owner}/{repo}/contents/{path}")
+def _fetch_file(target: Repo, path: str) -> str:
+    payload = _gh_json("api", f"repos/{target.slug}/contents/{path}")
     if not isinstance(payload, dict):
-        raise typer.BadParameter(f"unexpected response fetching {path!r}")
+        msg = f"unexpected response fetching {path!r}"
+        raise typer.BadParameter(msg)
     if payload.get("encoding") == "base64":
         return base64.b64decode(payload["content"]).decode()
     return str(payload.get("content", ""))
@@ -313,11 +348,11 @@ def pull(
 ) -> None:
     """Fetch an issue template, populate frontmatter, and write issue.md to a fresh tmp dir."""
     _validate_kind(kind)
-    owner, features = _resolve_repo(repo)
+    target, features = _resolve_repo(repo)
     _validate_feature(feature, features)
 
     slug = _slug(kind, feature, title)
-    template_used, raw = _fetch_template(owner, repo, kind)
+    template_used, raw = _fetch_template(target, kind)
     _, source_name = template_used.split(":", 1)
     fm_meta, body = _parse_template(source_name, raw)
 
@@ -334,7 +369,7 @@ def pull(
     issue_path.write_text(
         _render_issue(_pr_title(kind, feature, title), fm_meta, stormitem_meta, body)
     )
-    print(
+    typer.echo(
         encode(
             {
                 "dir": str(work_dir),
@@ -351,51 +386,51 @@ def pull(
 # ---------------------------------------------------------------------------
 
 
-def _detect_push(owner: str, repo: str) -> bool:
+def _detect_push(target: Repo) -> bool:
     try:
         out = _gh(
-            "api", f"repos/{owner}/{repo}", "--jq", ".permissions.push"
+            "api", f"repos/{target.slug}", "--jq", ".permissions.push"
         ).stdout.strip()
     except subprocess.CalledProcessError:
         return False
     return out.lower() == "true"
 
 
-def _default_branch(owner: str, repo: str) -> str:
-    out = _gh("api", f"repos/{owner}/{repo}", "--jq", ".default_branch").stdout.strip()
+def _default_branch(target: Repo) -> str:
+    out = _gh("api", f"repos/{target.slug}", "--jq", ".default_branch").stdout.strip()
     if not out:
-        raise typer.BadParameter(f"could not resolve default branch for {owner}/{repo}")
+        msg = f"could not resolve default branch for {target.slug}"
+        raise typer.BadParameter(msg)
     return out
 
 
-def _ref_sha(owner: str, repo: str, branch: str) -> str:
+def _ref_sha(target: Repo, branch: str) -> str:
     out = _gh(
         "api",
-        f"repos/{owner}/{repo}/git/ref/heads/{branch}",
+        f"repos/{target.slug}/git/ref/heads/{branch}",
         "--jq",
         ".object.sha",
     ).stdout.strip()
     if not out:
-        raise typer.BadParameter(f"could not resolve sha for {owner}/{repo}@{branch}")
+        msg = f"could not resolve sha for {target.slug}@{branch}"
+        raise typer.BadParameter(msg)
     return out
 
 
-def _create_branch(owner: str, repo: str, branch: str, sha: str) -> None:
+def _create_branch(target: Repo, branch: str, sha: str) -> None:
     payload = json.dumps({"ref": f"refs/heads/{branch}", "sha": sha})
     _gh(
         "api",
         "-X",
         "POST",
-        f"repos/{owner}/{repo}/git/refs",
+        f"repos/{target.slug}/git/refs",
         "--input",
         "-",
         stdin=payload,
     )
 
 
-def _put_file(
-    owner: str, repo: str, path: str, message: str, content: str, branch: str
-) -> None:
+def _put_file(target: Repo, path: str, message: str, content: str, branch: str) -> None:
     payload = json.dumps(
         {
             "message": message,
@@ -407,41 +442,33 @@ def _put_file(
         "api",
         "-X",
         "PUT",
-        f"repos/{owner}/{repo}/contents/{path}",
+        f"repos/{target.slug}/contents/{path}",
         "--input",
         "-",
         stdin=payload,
     )
 
 
-def _create_issue(
-    owner: str,
-    repo: str,
-    title: str,
-    body: str,
-    labels: list[str],
-    assignees: list[str],
-) -> str:
+def _create_issue(target: Repo, draft: IssueDraft) -> str:
     args = [
         "issue",
         "create",
         "--repo",
-        f"{owner}/{repo}",
+        target.slug,
         "--title",
-        title,
+        draft.title,
         "--body",
-        body,
+        draft.body,
     ]
-    for label in labels:
+    for label in draft.labels:
         args += ["--label", label]
-    for assignee in assignees:
+    for assignee in draft.assignees:
         args += ["--assignee", assignee]
     return _gh(*args).stdout.strip().splitlines()[-1]
 
 
 def _create_pr(
-    owner: str,
-    repo: str,
+    target: Repo,
     base: str,
     head: str,
     title: str,
@@ -451,7 +478,7 @@ def _create_pr(
         "pr",
         "create",
         "--repo",
-        f"{owner}/{repo}",
+        target.slug,
         "--base",
         base,
         "--head",
@@ -465,13 +492,13 @@ def _create_pr(
     return _gh(*args).stdout.strip().splitlines()[-1]
 
 
-def _edit_issue(owner: str, repo: str, number: int, body: str) -> None:
+def _edit_issue(target: Repo, number: int, body: str) -> None:
     _gh(
         "issue",
         "edit",
         str(number),
         "--repo",
-        f"{owner}/{repo}",
+        target.slug,
         "--body",
         body,
     )
@@ -488,14 +515,16 @@ def _create_gist(plan_path: Path) -> str:
 def _issue_number(url: str) -> int:
     m = ISSUE_URL_RE.search(url)
     if m is None:
-        raise typer.BadParameter(f"could not parse issue number from {url!r}")
+        msg = f"could not parse issue number from {url!r}"
+        raise typer.BadParameter(msg)
     return int(m.group(1))
 
 
 def _pr_number(url: str) -> int:
     m = PR_URL_RE.search(url)
     if m is None:
-        raise typer.BadParameter(f"could not parse PR number from {url!r}")
+        msg = f"could not parse PR number from {url!r}"
+        raise typer.BadParameter(msg)
     return int(m.group(1))
 
 
@@ -536,23 +565,45 @@ def post(
     ],
 ) -> None:
     """Read the populated dir and create issue + branch + draft PR (or gist fallback)."""
-    issue_path = work_dir / "issue.md"
     plan_path = work_dir / "plan.md"
-    if not issue_path.is_file():
-        raise typer.BadParameter(f"missing issue.md in {work_dir}")
     if not plan_path.is_file():
-        raise typer.BadParameter(f"missing plan.md in {work_dir}")
+        msg = f"missing plan.md in {work_dir}"
+        raise typer.BadParameter(msg)
+
+    draft, slug, template_used = _load_issue_draft(work_dir, repo)
+
+    target, _features = _resolve_repo(repo)
+    push = _detect_push(target)
+
+    if push:
+        result = _post_pr(
+            target=target,
+            slug=slug,
+            draft=draft,
+            plan_text=plan_path.read_text(),
+        )
+    else:
+        result = _post_gist(target=target, plan_path=plan_path, draft=draft)
+
+    result["template_used"] = template_used
+    _cleanup(work_dir)
+    typer.echo(encode(result))
+
+
+def _load_issue_draft(work_dir: Path, repo: str) -> tuple[IssueDraft, str, str]:
+    issue_path = work_dir / "issue.md"
+    if not issue_path.is_file():
+        msg = f"missing issue.md in {work_dir}"
+        raise typer.BadParameter(msg)
 
     fm, body = _parse_md_template(issue_path.read_text())
     stormitem_meta = fm.get("stormitem")
     if not isinstance(stormitem_meta, dict):
-        raise typer.BadParameter(
-            "issue.md is missing the `stormitem:` frontmatter block"
-        )
+        msg = "issue.md is missing the `stormitem:` frontmatter block"
+        raise typer.BadParameter(msg)
     if stormitem_meta.get("repo") != repo:
-        raise typer.BadParameter(
-            f"issue.md was prepared for repo {stormitem_meta.get('repo')!r}, not {repo!r}"
-        )
+        msg = f"issue.md was prepared for repo {stormitem_meta.get('repo')!r}, not {repo!r}"
+        raise typer.BadParameter(msg)
     kind = str(stormitem_meta["kind"])
     feature = str(stormitem_meta["feature"])
     title = str(stormitem_meta["title"])
@@ -563,82 +614,55 @@ def post(
     labels = [str(x) for x in (fm.get("labels") or [])]
     assignees = [str(x) for x in (fm.get("assignees") or [])]
 
-    owner, _features = _resolve_repo(repo)
-    push = _detect_push(owner, repo)
-
-    if push:
-        result = _post_pr(
-            owner=owner,
-            repo=repo,
-            slug=slug,
-            pr_title=pr_title,
-            body=body,
-            labels=labels,
-            assignees=assignees,
-            plan_text=plan_path.read_text(),
-        )
-    else:
-        result = _post_gist(
-            owner=owner,
-            repo=repo,
-            plan_path=plan_path,
-            issue_title=pr_title,
-            body=body,
-            labels=labels,
-            assignees=assignees,
-        )
-
-    result["template_used"] = template_used
-    _cleanup(work_dir)
-    print(encode(result))
+    draft = IssueDraft(title=pr_title, body=body, labels=labels, assignees=assignees)
+    return draft, slug, template_used
 
 
 def _post_pr(
     *,
-    owner: str,
-    repo: str,
+    target: Repo,
     slug: str,
-    pr_title: str,
-    body: str,
-    labels: list[str],
-    assignees: list[str],
+    draft: IssueDraft,
     plan_text: str,
 ) -> dict[str, Any]:
     last_step = "init"
     try:
         last_step = "issue create"
-        issue_url = _create_issue(owner, repo, pr_title, body, labels, assignees)
+        issue_url = _create_issue(target, draft)
         issue_number = _issue_number(issue_url)
 
         last_step = "default branch lookup"
-        default_branch = _default_branch(owner, repo)
+        default_branch = _default_branch(target)
 
         last_step = "base sha lookup"
-        base_sha = _ref_sha(owner, repo, default_branch)
+        base_sha = _ref_sha(target, default_branch)
 
         branch = _branch(slug)
         last_step = "branch create"
-        _create_branch(owner, repo, branch, base_sha)
+        _create_branch(target, branch, base_sha)
 
         last_step = "plan commit"
         _put_file(
-            owner,
-            repo,
+            target,
             f"plan/{slug}/plan.md",
-            f"plan: {pr_title}",
+            f"plan: {draft.title}",
             plan_text,
             branch,
         )
 
         last_step = "PR create"
         pr_body = f"Closes #{issue_number}\n\n{_summary_line(plan_text)}"
-        pr_url = _create_pr(owner, repo, default_branch, branch, pr_title, pr_body)
+        pr_url = _create_pr(target, default_branch, branch, draft.title, pr_body)
         pr_number = _pr_number(pr_url)
 
         last_step = "issue linkback"
-        new_body = body.rstrip() + f"\n\nPlan PR: #{pr_number}\n"
-        _edit_issue(owner, repo, issue_number, new_body)
-
+        new_body = draft.body.rstrip() + f"\n\nPlan PR: #{pr_number}\n"
+        _edit_issue(target, issue_number, new_body)
+    except subprocess.CalledProcessError as e:
+        stderr = (e.stderr or "").strip() or str(e)
+        typer.echo(f"stormitem post failed at step {last_step!r}: {stderr}", err=True)
+        raise typer.Exit(1) from e
+    else:
         return {
             "number": issue_number,
             "url": issue_url,
@@ -646,21 +670,13 @@ def _post_pr(
             "pr_number": pr_number,
             "mode": "pr",
         }
-    except subprocess.CalledProcessError as e:
-        stderr = (e.stderr or "").strip() or str(e)
-        typer.echo(f"stormitem post failed at step {last_step!r}: {stderr}", err=True)
-        raise typer.Exit(1) from e
 
 
 def _post_gist(
     *,
-    owner: str,
-    repo: str,
+    target: Repo,
     plan_path: Path,
-    issue_title: str,
-    body: str,
-    labels: list[str],
-    assignees: list[str],
+    draft: IssueDraft,
 ) -> dict[str, Any]:
     last_step = "init"
     try:
@@ -668,12 +684,15 @@ def _post_gist(
         gist_url = _create_gist(plan_path)
 
         last_step = "issue create"
-        augmented = body.rstrip() + f"\n\n📋 [Storming plan]({gist_url})\n"
-        issue_url = _create_issue(
-            owner, repo, issue_title, augmented, labels, assignees
-        )
+        augmented_body = draft.body.rstrip() + f"\n\n📋 [Storming plan]({gist_url})\n"
+        augmented_draft = draft._replace(body=augmented_body)
+        issue_url = _create_issue(target, augmented_draft)
         issue_number = _issue_number(issue_url)
-
+    except subprocess.CalledProcessError as e:
+        stderr = (e.stderr or "").strip() or str(e)
+        typer.echo(f"stormitem post failed at step {last_step!r}: {stderr}", err=True)
+        raise typer.Exit(1) from e
+    else:
         return {
             "number": issue_number,
             "url": issue_url,
@@ -681,10 +700,6 @@ def _post_gist(
             "pr_number": None,
             "mode": "gist",
         }
-    except subprocess.CalledProcessError as e:
-        stderr = (e.stderr or "").strip() or str(e)
-        typer.echo(f"stormitem post failed at step {last_step!r}: {stderr}", err=True)
-        raise typer.Exit(1) from e
 
 
 # ---------------------------------------------------------------------------
@@ -705,7 +720,7 @@ def registry() -> None:
         }
         for name, info in sorted(repos.items())
     ]
-    print(encode({"repos": rows}))
+    typer.echo(encode({"repos": rows}))
 
 
 if __name__ == "__main__":

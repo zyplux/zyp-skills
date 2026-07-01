@@ -143,8 +143,22 @@ def _parse_conf(path: Path) -> dict[str, str]:
     return out
 
 
+class ToolNotFoundError(RuntimeError):
+    def __init__(self, tool: str) -> None:
+        super().__init__(f"`{tool}` not found on PATH")
+
+
 def _run(*args: str, cwd: Path | None = None, check: bool = True) -> None:
-    subprocess.run(args, cwd=cwd, check=check)
+    """The single audited subprocess boundary for skillman.
+
+    `args[0]` is resolved to an absolute path via PATH, the remaining args are
+    program-constructed (never user-derived), and the shell is never invoked, so
+    there is no command-injection surface.
+    """
+    executable = shutil.which(args[0])
+    if executable is None:
+        raise ToolNotFoundError(args[0])
+    subprocess.run([executable, *args[1:]], cwd=cwd, check=check)
 
 
 def _install_one(name: str, source: str) -> None:

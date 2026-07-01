@@ -54,7 +54,7 @@ def test_missing_args_fails(invoke):
     ids=["omitted", "dash"],
 )
 def test_reads_stdin(invoke, suggest_dir, args, stdin):
-    invoke(*args, input=stdin)
+    invoke(*args, stdin=stdin)
     files = list((suggest_dir / "peek").glob("suggestion_*.md"))
     assert len(files) == 1
     assert files[0].read_text() == stdin + "\n"

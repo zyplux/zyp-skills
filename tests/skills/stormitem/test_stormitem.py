@@ -77,8 +77,8 @@ def test_validate_feature_rejects(stormitem):
 
 
 def test_resolve_repo_known(stormitem):
-    owner, features = stormitem._resolve_repo("zyp-skills")
-    assert owner == "zyplux"
+    target, features = stormitem._resolve_repo("zyp-skills")
+    assert target.owner == "zyplux"
     assert "stormitem" in features
 
 
@@ -389,7 +389,7 @@ class _Recorder:
 def test_post_pr_mode_full_flow(invoke, stormitem, decode, monkeypatch, tmp_path):
     work = _make_workdir(tmp_path)
     rec = _Recorder()
-    monkeypatch.setattr(stormitem, "_detect_push", lambda owner, repo: True)
+    monkeypatch.setattr(stormitem, "_detect_push", lambda target: True)
     monkeypatch.setattr(
         stormitem,
         "_create_issue",
@@ -431,7 +431,7 @@ def test_post_pr_mode_cleans_non_tmp_dir(invoke, stormitem, monkeypatch, tmp_pat
     fake_tmp.mkdir()
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(fake_tmp))
     work = _make_workdir(tmp_path / "elsewhere")
-    monkeypatch.setattr(stormitem, "_detect_push", lambda owner, repo: True)
+    monkeypatch.setattr(stormitem, "_detect_push", lambda target: True)
     monkeypatch.setattr(
         stormitem,
         "_create_issue",
@@ -471,7 +471,7 @@ def test_post_pr_mode_keeps_tmp_dir(invoke, stormitem, monkeypatch, tmp_path):
     (work / "issue.md").write_text(f"---\n{fm_text}\n---\n\nbody\n")
     (work / "plan.md").write_text("plan\n")
 
-    monkeypatch.setattr(stormitem, "_detect_push", lambda owner, repo: True)
+    monkeypatch.setattr(stormitem, "_detect_push", lambda target: True)
     monkeypatch.setattr(
         stormitem,
         "_create_issue",
@@ -495,7 +495,7 @@ def test_post_pr_mode_keeps_tmp_dir(invoke, stormitem, monkeypatch, tmp_path):
 def test_post_gist_mode_full_flow(invoke, stormitem, decode, monkeypatch, tmp_path):
     work = _make_workdir(tmp_path)
     rec = _Recorder()
-    monkeypatch.setattr(stormitem, "_detect_push", lambda owner, repo: False)
+    monkeypatch.setattr(stormitem, "_detect_push", lambda target: False)
     monkeypatch.setattr(
         stormitem,
         "_create_gist",
@@ -518,7 +518,7 @@ def test_post_gist_mode_full_flow(invoke, stormitem, decode, monkeypatch, tmp_pa
         "template_used": "builtin:feat",
     }
     issue_call = next(c for c in rec.calls if c[0] == "issue")
-    issue_body = issue_call[1][3]
+    issue_body = issue_call[1][1].body
     assert "https://gist.github.com/realSergiy/abcdef" in issue_body
     assert "Storming plan" in issue_body
 
@@ -638,5 +638,5 @@ def test_registry_features_match_skills_dir(stormitem):
 
 
 def test_registry_sane_owner(stormitem):
-    owner, _ = stormitem._resolve_repo("zyp-skills")
-    assert owner == "zyplux"
+    target, _ = stormitem._resolve_repo("zyp-skills")
+    assert target.owner == "zyplux"

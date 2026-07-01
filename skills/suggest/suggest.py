@@ -21,9 +21,9 @@ __version__ = "0.5.0"
 app = typer.Typer()
 
 
-def _version_callback(value: bool) -> None:
+def _version_callback(*, value: bool) -> None:
     if value:
-        print(f"suggest {__version__}")
+        typer.echo(f"suggest {__version__}")
         raise typer.Exit
 
 
@@ -71,7 +71,7 @@ def main(
     if not text.strip():
         raise typer.BadParameter("Suggestion text cannot be empty")
     path = _save(skill, text)
-    print(encode({"saved": str(path)}))
+    typer.echo(encode({"saved": str(path)}))
 
 
 if __name__ == "__main__":

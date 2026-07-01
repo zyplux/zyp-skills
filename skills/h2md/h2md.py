@@ -478,7 +478,7 @@ def _extract(workspace: Path, selector: str | None) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _assets(workspace: Path, no_assets: bool) -> None:
+def _assets(workspace: Path, *, no_assets: bool) -> None:
     if no_assets:
         return
     article_path = workspace / "article.html"
@@ -808,7 +808,8 @@ def _lint(workspace: Path) -> None:
     article = workspace / "article.md"
     shutil.copy2(prelint, article)
 
-    if not shutil.which("rumdl"):
+    rumdl = shutil.which("rumdl")
+    if rumdl is None:
         (workspace / "lint.report.txt").write_text(
             "rumdl not found on PATH, skipping lint\n"
         )
@@ -818,13 +819,17 @@ def _lint(workspace: Path) -> None:
     cfg_args = ["--config", str(config)] if config.exists() else []
 
     subprocess.run(
-        ["rumdl", "check", "--fix", *cfg_args, str(article)],
+        [rumdl, "check", "--fix", *cfg_args, str(article)],
         capture_output=True,
         text=True,
+        check=False,
     )
 
     result = subprocess.run(
-        ["rumdl", "check", *cfg_args, str(article)], capture_output=True, text=True
+        [rumdl, "check", *cfg_args, str(article)],
+        capture_output=True,
+        text=True,
+        check=False,
     )
     (workspace / "lint.report.txt").write_text(result.stdout + result.stderr)
 
@@ -984,7 +989,7 @@ def _handoff(
         )
     else:
         output["next"] = "Article is clean. Read article.md."
-    print(encode(output))
+    typer.echo(encode(output))
 
 
 # ---------------------------------------------------------------------------
@@ -992,9 +997,9 @@ def _handoff(
 # ---------------------------------------------------------------------------
 
 
-def _version_callback(value: bool) -> None:
+def _version_callback(*, value: bool) -> None:
     if value:
-        print(f"h2md {__version__}")
+        typer.echo(f"h2md {__version__}")
         raise typer.Exit
 
 
@@ -1031,7 +1036,7 @@ def main(
     stages: list[tuple[str, Callable[[], None]]] = [
         ("fetch", lambda: _fetch(workspace, url)),
         ("extract", lambda: _extract(workspace, selector)),
-        ("assets", lambda: _assets(workspace, no_assets)),
+        ("assets", lambda: _assets(workspace, no_assets=no_assets)),
         ("convert", lambda: _convert(workspace)),
     ]
 

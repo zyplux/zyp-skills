@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -25,11 +26,25 @@ LEADING_H1_RE = re.compile(r"\A\s*#\s.*?(?:\n|\Z)")
 BLANK_RUN_RE = re.compile(r"\n{2,}")
 
 
+class ToolNotFoundError(RuntimeError):
+    def __init__(self, tool: str) -> None:
+        super().__init__(f"`{tool}` not found on PATH")
+
+
 def _run(
     *args: str, capture: bool = False, check: bool = True
 ) -> subprocess.CompletedProcess[str]:
+    """The single audited subprocess boundary for pusher.
+
+    `args[0]` is resolved to an absolute path via PATH, the remaining args are
+    program-constructed (never user-derived), and the shell is never invoked, so
+    there is no command-injection surface.
+    """
+    executable = shutil.which(args[0])
+    if executable is None:
+        raise ToolNotFoundError(args[0])
     return subprocess.run(
-        args, cwd=REPO_ROOT, text=True, check=check, capture_output=capture
+        [executable, *args[1:]], cwd=REPO_ROOT, text=True, check=check, capture_output=capture
     )
 
 

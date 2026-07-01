@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Literal
@@ -53,12 +54,27 @@ def read_skill_md_version(skill_dir: Path) -> str | None:
     return m.group(1) if m else None
 
 
+class ToolNotFoundError(RuntimeError):
+    def __init__(self, tool: str) -> None:
+        super().__init__(f"`{tool}` not found on PATH")
+
+
 def _git_show(ref: str, path: str) -> str | None:
+    """The single audited subprocess boundary for release.
+
+    `git` is resolved to an absolute path via PATH, the remaining args are
+    program-constructed (never user-derived), and the shell is never invoked, so
+    there is no command-injection surface.
+    """
+    executable = shutil.which("git")
+    if executable is None:
+        raise ToolNotFoundError("git")
     proc = subprocess.run(
-        ["git", "show", f"{ref}:{path}"],
+        [executable, "show", f"{ref}:{path}"],
         cwd=REPO_ROOT,
         text=True,
         capture_output=True,
+        check=False,
     )
     return proc.stdout if proc.returncode == 0 else None
 
