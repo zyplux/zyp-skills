@@ -30,8 +30,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = REPO_ROOT / "skills"
 BASE_REF = "origin/main"
 
-SKILL_MD_VERSION_RE = re.compile(r'^(\s*version:\s*).*$', re.MULTILINE)
-PY_VERSION_RE = re.compile(r'^(__version__\s*=\s*).*$', re.MULTILINE)
+SKILL_MD_VERSION_RE = re.compile(r"^(\s*version:\s*).*$", re.MULTILINE)
+PY_VERSION_RE = re.compile(r"^(__version__\s*=\s*).*$", re.MULTILINE)
 SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 SKILL_MD_VERSION_READ_RE = re.compile(r'^\s*version:\s*"?([^"\s]+)"?\s*$', re.MULTILINE)
 
@@ -56,7 +56,9 @@ def read_skill_md_version(skill_dir: Path) -> str | None:
 def _git_show(ref: str, path: str) -> str | None:
     proc = subprocess.run(
         ["git", "show", f"{ref}:{path}"],
-        cwd=REPO_ROOT, text=True, capture_output=True,
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
     )
     return proc.stdout if proc.returncode == 0 else None
 
@@ -154,7 +156,9 @@ def bump(
         raise typer.BadParameter(f"unknown skill: {skill}")
     base = base_skill_md_version(skill)
     if base is None:
-        typer.echo(f"{skill}: not on {BASE_REF} (new skill?). Set the initial version manually.")
+        typer.echo(
+            f"{skill}: not on {BASE_REF} (new skill?). Set the initial version manually."
+        )
         return
     current = read_skill_md_version(skill_dir)
     if current is None:
@@ -162,7 +166,9 @@ def bump(
     new = decide_bump(base, current, requested)
     if new is None:
         kind = diff_kind(base, current)
-        typer.echo(f"{skill}: {current} (already {kind}-bumped from {base}). no change.")
+        typer.echo(
+            f"{skill}: {current} (already {kind}-bumped from {base}). no change."
+        )
         return
     _apply_version_bump(skill, new)
     typer.echo(f"{skill}: {current} → {new} ({requested}, base {base})")

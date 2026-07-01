@@ -1,0 +1,3 @@
+preset = "strict"
+python-interpreter-path = ".venv/bin/python3"
+project-includes = ["skills", "scripts", "tests"]

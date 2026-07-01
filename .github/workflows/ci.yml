@@ -15,16 +15,18 @@ jobs:
   ci:
     name: ci
     runs-on: ubuntu-latest
+    container: ghcr.io/zyplux/ci:0.1.0
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@v8.2.0
-        with:
-          enable-cache: true
-      - run: uv sync --all-groups
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: uv sync --locked --all-groups
       - run: uv run --no-sync vulture
       - run: uv run --no-sync rumdl check
+      - run: uv run --no-sync rumdl fmt --check
       - run: uv run --no-sync ruff check
+      - run: uv run --no-sync ruff format --check
       - run: uv run --no-sync pyrefly check
       - run: uv run --no-sync pytest
+      - run: uv run --no-sync cerberus

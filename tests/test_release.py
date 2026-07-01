@@ -49,9 +49,7 @@ def _write_skill(path: Path, version: str) -> None:
 
 
 @pytest.fixture
-def make_skill(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Callable[..., Path]:
+def make_skill(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Callable[..., Path]:
     """Init a tmp git repo with `main` and return a factory that places skills in it."""
     monkeypatch.setattr(release, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(release, "SKILLS_DIR", tmp_path / "skills")

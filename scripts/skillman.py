@@ -65,7 +65,9 @@ def _version(skill_dir: Path) -> str | None:
 
 
 def _all_skills() -> list[str]:
-    return sorted(p.name for p in SKILLS_DIR.iterdir() if p.is_dir() and (p / "SKILL.md").exists())
+    return sorted(
+        p.name for p in SKILLS_DIR.iterdir() if p.is_dir() and (p / "SKILL.md").exists()
+    )
 
 
 def _stale_skills(force: bool) -> list[str]:
@@ -74,7 +76,9 @@ def _stale_skills(force: bool) -> list[str]:
     out: list[str] = []
     for name in _all_skills():
         installed = INSTALL_ROOT / name
-        if not (installed / "SKILL.md").exists() or _version(SKILLS_DIR / name) != _version(installed):
+        if not (installed / "SKILL.md").exists() or _version(
+            SKILLS_DIR / name
+        ) != _version(installed):
             out.append(name)
     return out
 
@@ -148,7 +152,9 @@ def _install_one(name: str, source: str) -> None:
         raise typer.BadParameter(f"unknown skill: {name}")
     runner = _find_runner()
     typer.echo(f"==> installing {name} (source: {source}, runner: {runner.dlx})")
-    _run(runner.dlx, "skills", "add", source, "-g", "--skill", name, "-y", cwd=REPO_ROOT)
+    _run(
+        runner.dlx, "skills", "add", source, "-g", "--skill", name, "-y", cwd=REPO_ROOT
+    )
     target = INSTALL_ROOT / name
     py_path = target / f"{name}.py"
     if py_path.exists():
@@ -164,8 +170,15 @@ def _force_default() -> bool:
 
 @app.command()
 def install(
-    name: str = typer.Argument("", help="Skill to install. Omit to install every stale skill."),
-    force: bool = typer.Option(False, "--force", "-f", help="Reinstall even if version matches (or set FORCE=1)."),
+    name: str = typer.Argument(
+        "", help="Skill to install. Omit to install every stale skill."
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Reinstall even if version matches (or set FORCE=1).",
+    ),
     source: str = typer.Option(
         DEFAULT_SOURCE,
         "--source",
@@ -200,7 +213,9 @@ def uninstall(name: str = typer.Argument(..., help="Skill to uninstall.")) -> No
 
 @app.command("list-stale")
 def list_stale(
-    force: bool = typer.Option(False, "--force", "-f", help="List every skill regardless of version match."),
+    force: bool = typer.Option(
+        False, "--force", "-f", help="List every skill regardless of version match."
+    ),
 ) -> None:
     """Print skills whose source version differs from the installed copy, one per line."""
     for name in _stale_skills(force=force or _force_default()):

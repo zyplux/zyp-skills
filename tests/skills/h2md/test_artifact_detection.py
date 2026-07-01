@@ -17,7 +17,9 @@ def test_html_leakage_detected(pipeline):
     <p>Some text <svg viewBox="0 0 10 10"><path d="M0"/></svg> leftover content.</p>
     </article></body></html>"""
     r = pipeline(html)
-    assert any(i["type"] == "HTML leakage" for i in r.issues) or "svg" not in r.md.lower()
+    assert (
+        any(i["type"] == "HTML leakage" for i in r.issues) or "svg" not in r.md.lower()
+    )
 
 
 def test_clean_content_no_issues(pipeline, read_fixture):
@@ -68,7 +70,8 @@ def test_inline_code_not_flagged_as_fused(pipeline):
 
 def test_multiple_links_zero_false_positives(pipeline):
     links = " ".join(
-        f'<a href="https://example.com/very/long/path/to/resource/number/{i}">link{i}</a>' for i in range(10)
+        f'<a href="https://example.com/very/long/path/to/resource/number/{i}">link{i}</a>'
+        for i in range(10)
     )
     html = f"""<!DOCTYPE html><html><body><article>
     <h1>Title</h1>

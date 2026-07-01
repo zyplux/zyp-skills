@@ -25,15 +25,21 @@ LEADING_H1_RE = re.compile(r"\A\s*#\s.*?(?:\n|\Z)")
 BLANK_RUN_RE = re.compile(r"\n{2,}")
 
 
-def _run(*args: str, capture: bool = False, check: bool = True) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(args, cwd=REPO_ROOT, text=True, check=check, capture_output=capture)
+def _run(
+    *args: str, capture: bool = False, check: bool = True
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        args, cwd=REPO_ROOT, text=True, check=check, capture_output=capture
+    )
 
 
 def _git(*args: str) -> str:
     return _run("git", *args, capture=True).stdout.strip()
 
 
-def _gh(*args: str, check: bool = True, capture: bool = True) -> subprocess.CompletedProcess[str]:
+def _gh(
+    *args: str, check: bool = True, capture: bool = True
+) -> subprocess.CompletedProcess[str]:
     return _run("gh", *args, capture=capture, check=check)
 
 
@@ -56,7 +62,9 @@ def _clean_body(body: str) -> str:
 
 
 def main(
-    ready: bool = typer.Option(False, "--ready", "-r", help="Mark PR ready and enable auto-merge."),
+    ready: bool = typer.Option(
+        False, "--ready", "-r", help="Mark PR ready and enable auto-merge."
+    ),
 ) -> None:
     """Push the current branch and either open a draft PR or mark it ready."""
     branch = _current_branch()
@@ -69,7 +77,9 @@ def main(
 
     pr = _pr_view()
     if pr is not None and pr.get("state") == "MERGED":
-        typer.echo(f"PR #{pr['number']} merged; switching to main and deleting local branch '{branch}'")
+        typer.echo(
+            f"PR #{pr['number']} merged; switching to main and deleting local branch '{branch}'"
+        )
         _run("git", "checkout", "main")
         _run("git", "pull", "--ff-only")
         _run("git", "branch", "-D", branch)
@@ -110,7 +120,16 @@ def main(
         typer.echo(f"PR (draft): {url}")
         return
 
-    _gh("pr", "merge", str(number), "--auto", "--squash", "--delete-branch", check=False, capture=False)
+    _gh(
+        "pr",
+        "merge",
+        str(number),
+        "--auto",
+        "--squash",
+        "--delete-branch",
+        check=False,
+        capture=False,
+    )
     typer.echo(f"PR (ready, auto-merge enabled): {url}")
 
 

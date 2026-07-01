@@ -27,7 +27,10 @@ def test_json(h2md):
 
 
 def test_python(h2md):
-    assert h2md._sniff_language("from fastapi import FastAPI\n\napp = FastAPI()") == "python"
+    assert (
+        h2md._sniff_language("from fastapi import FastAPI\n\napp = FastAPI()")
+        == "python"
+    )
 
 
 def test_javascript(h2md):
@@ -49,13 +52,22 @@ def test_typescript(h2md):
 
 
 def test_es6_import_is_javascript_not_python(h2md):
-    assert h2md._sniff_language("import express from 'express'\nconst app = express()") == "javascript"
+    assert (
+        h2md._sniff_language("import express from 'express'\nconst app = express()")
+        == "javascript"
+    )
     assert h2md._sniff_language('import { useState } from "react"') == "javascript"
 
 
 def test_es6_export_is_javascript(h2md):
-    assert h2md._sniff_language("export default function handler(req, res) {}") == "javascript"
-    assert h2md._sniff_language("export const config = { runtime: 'edge' }") == "javascript"
+    assert (
+        h2md._sniff_language("export default function handler(req, res) {}")
+        == "javascript"
+    )
+    assert (
+        h2md._sniff_language("export const config = { runtime: 'edge' }")
+        == "javascript"
+    )
 
 
 def test_default_text(h2md):

@@ -57,5 +57,9 @@ def test_version_consistent(skill, runner):
     py_version = skill.__version__
     md_version = _skill_md_version(skill_dir)
     pkg_version = json.loads((skill_dir / "package.json").read_text())["version"]
-    assert py_version == md_version, f"__version__ ({py_version}) != SKILL.md ({md_version})"
-    assert py_version == pkg_version, f"__version__ ({py_version}) != package.json ({pkg_version})"
+    assert py_version == md_version, (
+        f"__version__ ({py_version}) != SKILL.md ({md_version})"
+    )
+    assert py_version == pkg_version, (
+        f"__version__ ({py_version}) != package.json ({pkg_version})"
+    )

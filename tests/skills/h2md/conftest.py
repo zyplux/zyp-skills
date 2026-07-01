@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -35,11 +35,14 @@ def read_fixture():
 def invoke(run, h2md):
     def _invoke(*args: str, **kwargs):
         return run(h2md.app, args, **kwargs)
+
     return _invoke
 
 
 def _mock_subprocess_run(*args, **kwargs):
-    return subprocess.CompletedProcess(args=args[0] if args else [], returncode=0, stdout="", stderr="")
+    return subprocess.CompletedProcess(
+        args=args[0] if args else [], returncode=0, stdout="", stderr=""
+    )
 
 
 @pytest.fixture
@@ -97,4 +100,5 @@ def pipeline(h2md, run, serve_html, decode, mock_lint):
             toon=d,
             workspace=ws,
         )
+
     return _run

@@ -80,10 +80,7 @@ def test_all_rows_no_row_count(invoke, decode):
 def test_cols_select(invoke):
     result = invoke("--cols", "round,points")
     assert result.output == (
-        "tourney_points[2]{round,points}:\n"
-        "  F,2000\n"
-        "  SF,800\n"
-        "rows: 94\n"
+        "tourney_points[2]{round,points}:\n  F,2000\n  SF,800\nrows: 94\n"
     )
 
 
@@ -215,7 +212,10 @@ def test_groupby_multiple_columns(invoke):
 
 
 def test_sql_groupby(invoke):
-    result = invoke("-q", "SELECT round, COUNT(*) as cnt FROM t GROUP BY round ORDER BY cnt DESC, round")
+    result = invoke(
+        "-q",
+        "SELECT round, COUNT(*) as cnt FROM t GROUP BY round ORDER BY cnt DESC, round",
+    )
     assert result.output == (
         "result[11]{round,cnt}:\n"
         "  F,15\n"
@@ -267,14 +267,16 @@ def test_sql_multi_file_t1_t2(runner, peek):
     points = str(FIXTURE_DIR / "tourney_points.parquet")
     result = runner.invoke(
         peek.app,
-        ["-q", "SELECT t1.player, t1.wins FROM t1 ORDER BY t1.wins DESC", players, points],
+        [
+            "-q",
+            "SELECT t1.player, t1.wins FROM t1 ORDER BY t1.wins DESC",
+            players,
+            points,
+        ],
     )
     assert result.exit_code == 0
     assert result.output == (
-        "result[3]{player,wins}:\n"
-        "  Federer,103\n"
-        "  Djokovic,98\n"
-        "  Nadal,92\n"
+        "result[3]{player,wins}:\n  Federer,103\n  Djokovic,98\n  Nadal,92\n"
     )
 
 
@@ -348,7 +350,9 @@ def test_no_path_exits_with_error(runner, peek):
 
 
 def test_nonexistent_file_exits_with_error(invoke):
-    result = invoke("--", "/nonexistent/file.parquet", use_fixture=False, expect_error=True)
+    result = invoke(
+        "--", "/nonexistent/file.parquet", use_fixture=False, expect_error=True
+    )
     assert result.exit_code != 0
 
 

@@ -15,7 +15,7 @@ import duckdb
 import typer
 from toon_format import encode
 
-__version__ = "0.7.1"
+__version__ = "0.8.0"
 
 app = typer.Typer()
 
@@ -75,7 +75,14 @@ def _count(con: duckdb.DuckDBPyConnection) -> int:
     return row[0]
 
 
-def _preview(con: duckdb.DuckDBPyConnection, stem: str, n: int, all_rows: bool, types: bool, cols: str | None) -> dict:
+def _preview(
+    con: duckdb.DuckDBPyConnection,
+    stem: str,
+    n: int,
+    all_rows: bool,
+    types: bool,
+    cols: str | None,
+) -> dict:
     desc = _describe(con)
     col_names = [name for name, _ in desc]
     if cols:
@@ -118,7 +125,9 @@ def _describe_stats(con: duckdb.DuckDBPyConnection, stem: str) -> str:
     for row in rows:
         name, dtype = row[0], row[1]
         null_val = float(row[11])
-        null_str = f"{int(null_val)}%" if null_val == int(null_val) else f"{null_val:.1f}%"
+        null_str = (
+            f"{int(null_val)}%" if null_val == int(null_val) else f"{null_val:.1f}%"
+        )
         if row[5] is not None:
             parts = [
                 f"min={_fmt_num(row[2])}",
@@ -164,10 +173,14 @@ def _groupby(con: duckdb.DuckDBPyConnection, columns: str) -> dict:
 
 def _register_tables(con: duckdb.DuckDBPyConnection, paths: list[Path]) -> list[str]:
     names = ["t"]
-    con.execute(f"CREATE VIEW t AS SELECT * FROM read_parquet('{_escape_path(paths[0])}')")
+    con.execute(
+        f"CREATE VIEW t AS SELECT * FROM read_parquet('{_escape_path(paths[0])}')"
+    )
     for i, p in enumerate(paths, 1):
         name = f"t{i}"
-        con.execute(f"CREATE VIEW {name} AS SELECT * FROM read_parquet('{_escape_path(p)}')")
+        con.execute(
+            f"CREATE VIEW {name} AS SELECT * FROM read_parquet('{_escape_path(p)}')"
+        )
         names.append(name)
     return names
 
@@ -193,17 +206,39 @@ def _sql(con: duckdb.DuckDBPyConnection, query: str, table_names: list[str]) -> 
 
 @app.command()
 def main(
-    path: Annotated[list[str], typer.Argument(help="Path(s) or glob pattern(s) for parquet file(s)")],
+    path: Annotated[
+        list[str], typer.Argument(help="Path(s) or glob pattern(s) for parquet file(s)")
+    ],
     n: Annotated[int, typer.Option("-n", help="Number of preview rows")] = 2,
     all_rows: Annotated[bool, typer.Option("-a", help="Show all rows")] = False,
     types: Annotated[bool, typer.Option("-t", help="Include column types")] = False,
-    schema: Annotated[bool, typer.Option("-c", help="Show columns and types only")] = False,
-    describe: Annotated[bool, typer.Option("-d", help="Describe columns with stats")] = False,
-    unique: Annotated[str | None, typer.Option("-u", help="Show unique values of column(s)")] = None,
-    group: Annotated[str | None, typer.Option("-g", help="Group-by column(s) with counts")] = None,
-    query: Annotated[str | None, typer.Option("-q", help="SQL query (tables: t, t1, t2, ...)")] = None,
-    cols: Annotated[str | None, typer.Option("--cols", help="Select columns for preview")] = None,
-    version: Annotated[bool | None, typer.Option("--version", callback=_version_callback, is_eager=True, help="Show version and exit")] = None,
+    schema: Annotated[
+        bool, typer.Option("-c", help="Show columns and types only")
+    ] = False,
+    describe: Annotated[
+        bool, typer.Option("-d", help="Describe columns with stats")
+    ] = False,
+    unique: Annotated[
+        str | None, typer.Option("-u", help="Show unique values of column(s)")
+    ] = None,
+    group: Annotated[
+        str | None, typer.Option("-g", help="Group-by column(s) with counts")
+    ] = None,
+    query: Annotated[
+        str | None, typer.Option("-q", help="SQL query (tables: t, t1, t2, ...)")
+    ] = None,
+    cols: Annotated[
+        str | None, typer.Option("--cols", help="Select columns for preview")
+    ] = None,
+    version: Annotated[
+        bool | None,
+        typer.Option(
+            "--version",
+            callback=_version_callback,
+            is_eager=True,
+            help="Show version and exit",
+        ),
+    ] = None,
 ) -> None:
     """Inspect parquet files — preview, schema, unique values, group-by, or SQL."""
     modes = [describe, schema, unique is not None, group is not None, query is not None]

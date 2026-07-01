@@ -1,0 +1,14 @@
+name: org_gate
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  statuses: write
+  checks: read
+  pull-requests: read
+
+jobs:
+  org_gate_base:
+    uses: zyplux/.github/.github/workflows/org_gate_base.yml@main

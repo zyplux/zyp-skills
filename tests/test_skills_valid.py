@@ -11,7 +11,9 @@ SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 SKILL_MD_VERSION_READ_RE = re.compile(r'^\s*version:\s*"?([^"\s]+)"?\s*$', re.MULTILINE)
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = REPO_ROOT / "skills"
-SKILL_DIRS = sorted(p for p in SKILLS_DIR.iterdir() if p.is_dir() and (p / "SKILL.md").exists())
+SKILL_DIRS = sorted(
+    p for p in SKILLS_DIR.iterdir() if p.is_dir() and (p / "SKILL.md").exists()
+)
 BASE_REF = "origin/main"
 
 
@@ -37,7 +39,7 @@ def test_skill_has_semver_version(skill_dir: Path) -> None:
     version = metadata.get("version")
     assert version is not None, (
         f"Skill '{skill_dir.name}' is missing metadata.version. "
-        f"Add a semver string (e.g. version: \"0.1.0\") to the frontmatter."
+        f'Add a semver string (e.g. version: "0.1.0") to the frontmatter.'
     )
     assert SEMVER_RE.match(version), (
         f"Skill '{skill_dir.name}' has metadata.version={version!r}; "
@@ -53,7 +55,8 @@ def test_skill_changes_require_version_bump(skill_dir: Path) -> None:
     """
     has_base = subprocess.run(
         ["git", "rev-parse", "--verify", BASE_REF],
-        cwd=REPO_ROOT, capture_output=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
     )
     if has_base.returncode != 0:
         pytest.skip(f"{BASE_REF} not fetched; run `git fetch origin main` to enable")
@@ -66,7 +69,9 @@ def test_skill_changes_require_version_bump(skill_dir: Path) -> None:
         return
     main_md = subprocess.run(
         ["git", "show", f"{BASE_REF}:{rel}/SKILL.md"],
-        cwd=REPO_ROOT, capture_output=True, text=True,
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
     )
     if main_md.returncode != 0:
         return
@@ -74,7 +79,9 @@ def test_skill_changes_require_version_bump(skill_dir: Path) -> None:
     if main_match is None:
         return
     main_version = main_match.group(1)
-    current_match = SKILL_MD_VERSION_READ_RE.search((skill_dir / "SKILL.md").read_text())
+    current_match = SKILL_MD_VERSION_READ_RE.search(
+        (skill_dir / "SKILL.md").read_text()
+    )
     assert current_match is not None, f"{skill_dir.name}/SKILL.md has no version field"
     current_version = current_match.group(1)
     assert current_version != main_version, (

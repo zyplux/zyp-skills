@@ -7,7 +7,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-
 # --- Pure helpers ----------------------------------------------------------
 
 
@@ -16,19 +15,31 @@ def test_slug_simple(stormitem):
 
 
 def test_slug_converts_spaces(stormitem):
-    assert stormitem._slug("fix", "h2md", "handle empty body") == "fix_h2md_handle_empty_body"
+    assert (
+        stormitem._slug("fix", "h2md", "handle empty body")
+        == "fix_h2md_handle_empty_body"
+    )
 
 
 def test_slug_strips_whitespace(stormitem):
-    assert stormitem._slug("feat", "peek", "  julia support  ") == "feat_peek_julia_support"
+    assert (
+        stormitem._slug("feat", "peek", "  julia support  ")
+        == "feat_peek_julia_support"
+    )
 
 
 def test_pr_title_converts_underscores(stormitem):
-    assert stormitem._pr_title("feat", "peek", "support_julia") == "feat(peek): support julia"
+    assert (
+        stormitem._pr_title("feat", "peek", "support_julia")
+        == "feat(peek): support julia"
+    )
 
 
 def test_pr_title_keeps_existing_spaces(stormitem):
-    assert stormitem._pr_title("fix", "h2md", "handle empty body") == "fix(h2md): handle empty body"
+    assert (
+        stormitem._pr_title("fix", "h2md", "handle empty body")
+        == "fix(h2md): handle empty body"
+    )
 
 
 def test_branch_prefixed(stormitem):
@@ -38,12 +49,16 @@ def test_branch_prefixed(stormitem):
 # --- Validation ------------------------------------------------------------
 
 
-@pytest.mark.parametrize("kind", ["feat", "fix", "docs", "refactor", "perf", "chore", "revert", "ci"])
+@pytest.mark.parametrize(
+    "kind", ["feat", "fix", "docs", "refactor", "perf", "chore", "revert", "ci"]
+)
 def test_validate_kind_accepts_conv_commits(stormitem, kind):
     stormitem._validate_kind(kind)
 
 
-@pytest.mark.parametrize("kind", ["Feat", "FEAT", "feat ", "feat-x", "1feat", "", "feat!"])
+@pytest.mark.parametrize(
+    "kind", ["Feat", "FEAT", "feat ", "feat-x", "1feat", "", "feat!"]
+)
 def test_validate_kind_rejects_invalid(stormitem, kind):
     with pytest.raises(Exception):
         stormitem._validate_kind(kind)
@@ -78,7 +93,10 @@ def test_resolve_repo_unknown(stormitem):
 def test_match_template_substring_feat(stormitem):
     items = [
         {"name": "bug_report.md", "path": ".github/ISSUE_TEMPLATE/bug_report.md"},
-        {"name": "feature_request.md", "path": ".github/ISSUE_TEMPLATE/feature_request.md"},
+        {
+            "name": "feature_request.md",
+            "path": ".github/ISSUE_TEMPLATE/feature_request.md",
+        },
     ]
     chosen = stormitem._match_template(items, "feat")
     assert chosen is not None
@@ -185,7 +203,7 @@ def test_render_issue_includes_stormitem_block(stormitem):
     )
     assert rendered.startswith("---\n")
     fm_text, _, body = rendered.partition("\n---\n")
-    fm = yaml.safe_load(fm_text[len("---\n"):])
+    fm = yaml.safe_load(fm_text[len("---\n") :])
     assert fm["title"] == "feat(peek): julia"
     assert fm["labels"] == ["enhancement"]
     assert fm["stormitem"]["repo"] == "zyp-skills"
@@ -197,10 +215,17 @@ def test_render_issue_skips_absent_metadata(stormitem):
     rendered = stormitem._render_issue(
         "feat(peek): x",
         {},
-        {"repo": "zyp-skills", "kind": "feat", "feature": "peek", "title": "x", "slug": "s", "template_used": "builtin:feat"},
+        {
+            "repo": "zyp-skills",
+            "kind": "feat",
+            "feature": "peek",
+            "title": "x",
+            "slug": "s",
+            "template_used": "builtin:feat",
+        },
         "body\n",
     )
-    fm_text = rendered.split("\n---\n", 1)[0][len("---\n"):]
+    fm_text = rendered.split("\n---\n", 1)[0][len("---\n") :]
     fm = yaml.safe_load(fm_text)
     assert "labels" not in fm
     assert "assignees" not in fm
@@ -209,9 +234,20 @@ def test_render_issue_skips_absent_metadata(stormitem):
 # --- Pull command ----------------------------------------------------------
 
 
-def test_pull_writes_issue_md_with_frontmatter(invoke, builtin_only, decode, tmp_path, monkeypatch):
+def test_pull_writes_issue_md_with_frontmatter(
+    invoke, builtin_only, decode, tmp_path, monkeypatch
+):
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
-    result = invoke("pull", "zyp-skills", "--kind", "feat", "--feature", "peek", "--title", "support julia")
+    result = invoke(
+        "pull",
+        "zyp-skills",
+        "--kind",
+        "feat",
+        "--feature",
+        "peek",
+        "--title",
+        "support julia",
+    )
     parsed = decode(result.output.strip())
     assert isinstance(parsed, dict)
     assert parsed["slug"] == "feat_peek_support_julia"
@@ -220,47 +256,101 @@ def test_pull_writes_issue_md_with_frontmatter(invoke, builtin_only, decode, tmp
     assert issue_path.is_file()
     content = issue_path.read_text()
     assert content.startswith("---\n")
-    fm_text = content.split("\n---\n", 1)[0][len("---\n"):]
+    fm_text = content.split("\n---\n", 1)[0][len("---\n") :]
     fm = yaml.safe_load(fm_text)
     assert fm["title"] == "feat(peek): support julia"
     assert fm["stormitem"]["slug"] == "feat_peek_support_julia"
     assert fm["stormitem"]["template_used"] == "builtin:feat"
 
 
-def test_pull_dir_starts_with_prefix(invoke, builtin_only, decode, tmp_path, monkeypatch):
+def test_pull_dir_starts_with_prefix(
+    invoke, builtin_only, decode, tmp_path, monkeypatch
+):
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
-    result = invoke("pull", "zyp-skills", "--kind", "fix", "--feature", "h2md", "--title", "empty body")
+    result = invoke(
+        "pull",
+        "zyp-skills",
+        "--kind",
+        "fix",
+        "--feature",
+        "h2md",
+        "--title",
+        "empty body",
+    )
     parsed = decode(result.output.strip())
     assert Path(parsed["dir"]).name.startswith("stormitem-fix_h2md_empty_body-")
     assert parsed["template_used"] == "builtin:fix"
 
 
-def test_pull_uses_default_template_for_unknown_kind(invoke, builtin_only, decode, tmp_path, monkeypatch):
+def test_pull_uses_default_template_for_unknown_kind(
+    invoke, builtin_only, decode, tmp_path, monkeypatch
+):
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(tmp_path))
-    result = invoke("pull", "zyp-skills", "--kind", "perf", "--feature", "peek", "--title", "speed up")
+    result = invoke(
+        "pull",
+        "zyp-skills",
+        "--kind",
+        "perf",
+        "--feature",
+        "peek",
+        "--title",
+        "speed up",
+    )
     parsed = decode(result.output.strip())
     assert parsed["template_used"] == "builtin:_default"
 
 
 def test_pull_unknown_repo_fails(invoke):
-    result = invoke("pull", "bogus-repo", "--kind", "feat", "--feature", "x", "--title", "y", expect_error=True)
+    result = invoke(
+        "pull",
+        "bogus-repo",
+        "--kind",
+        "feat",
+        "--feature",
+        "x",
+        "--title",
+        "y",
+        expect_error=True,
+    )
     assert result.exit_code != 0
 
 
 def test_pull_unknown_feature_fails(invoke):
-    result = invoke("pull", "zyp-skills", "--kind", "feat", "--feature", "nope", "--title", "y", expect_error=True)
+    result = invoke(
+        "pull",
+        "zyp-skills",
+        "--kind",
+        "feat",
+        "--feature",
+        "nope",
+        "--title",
+        "y",
+        expect_error=True,
+    )
     assert result.exit_code != 0
 
 
 def test_pull_invalid_kind_fails(invoke):
-    result = invoke("pull", "zyp-skills", "--kind", "FEAT", "--feature", "peek", "--title", "y", expect_error=True)
+    result = invoke(
+        "pull",
+        "zyp-skills",
+        "--kind",
+        "FEAT",
+        "--feature",
+        "peek",
+        "--title",
+        "y",
+        expect_error=True,
+    )
     assert result.exit_code != 0
 
 
 # --- Post command ----------------------------------------------------------
 
 
-def _make_workdir(tmp_path: Path, *, slug: str = "feat_peek_julia", repo: str = "zyp-skills") -> Path:
+def _make_workdir(
+    tmp_path: Path, *, slug: str = "feat_peek_julia", repo: str = "zyp-skills"
+) -> Path:
     work = tmp_path / "stormitem-work"
     work.mkdir(parents=True)
     fm = {
@@ -278,7 +368,9 @@ def _make_workdir(tmp_path: Path, *, slug: str = "feat_peek_julia", repo: str = 
     body = "## Summary\n\nAdd Julia support.\n"
     fm_text = yaml.safe_dump(fm, sort_keys=False).rstrip()
     (work / "issue.md").write_text(f"---\n{fm_text}\n---\n\n{body}")
-    (work / "plan.md").write_text("# Plan\n\nA detailed plan paragraph.\n\n## Section\n\nMore.\n")
+    (work / "plan.md").write_text(
+        "# Plan\n\nA detailed plan paragraph.\n\n## Section\n\nMore.\n"
+    )
     return work
 
 
@@ -303,7 +395,9 @@ def test_post_pr_mode_full_flow(invoke, stormitem, decode, monkeypatch, tmp_path
         "_create_issue",
         rec.make("issue", returns="https://github.com/zyplux/zyp-skills/issues/42"),
     )
-    monkeypatch.setattr(stormitem, "_default_branch", rec.make("default", returns="main"))
+    monkeypatch.setattr(
+        stormitem, "_default_branch", rec.make("default", returns="main")
+    )
     monkeypatch.setattr(stormitem, "_ref_sha", rec.make("sha", returns="abc123"))
     monkeypatch.setattr(stormitem, "_create_branch", rec.make("branch", returns=None))
     monkeypatch.setattr(stormitem, "_put_file", rec.make("commit", returns=None))
@@ -338,12 +432,20 @@ def test_post_pr_mode_cleans_non_tmp_dir(invoke, stormitem, monkeypatch, tmp_pat
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(fake_tmp))
     work = _make_workdir(tmp_path / "elsewhere")
     monkeypatch.setattr(stormitem, "_detect_push", lambda owner, repo: True)
-    monkeypatch.setattr(stormitem, "_create_issue", lambda *a, **k: "https://github.com/zyplux/zyp-skills/issues/1")
+    monkeypatch.setattr(
+        stormitem,
+        "_create_issue",
+        lambda *a, **k: "https://github.com/zyplux/zyp-skills/issues/1",
+    )
     monkeypatch.setattr(stormitem, "_default_branch", lambda *a, **k: "main")
     monkeypatch.setattr(stormitem, "_ref_sha", lambda *a, **k: "sha")
     monkeypatch.setattr(stormitem, "_create_branch", lambda *a, **k: None)
     monkeypatch.setattr(stormitem, "_put_file", lambda *a, **k: None)
-    monkeypatch.setattr(stormitem, "_create_pr", lambda *a, **k: "https://github.com/zyplux/zyp-skills/pull/2")
+    monkeypatch.setattr(
+        stormitem,
+        "_create_pr",
+        lambda *a, **k: "https://github.com/zyplux/zyp-skills/pull/2",
+    )
     monkeypatch.setattr(stormitem, "_edit_issue", lambda *a, **k: None)
 
     invoke("post", "zyp-skills", str(work))
@@ -370,12 +472,20 @@ def test_post_pr_mode_keeps_tmp_dir(invoke, stormitem, monkeypatch, tmp_path):
     (work / "plan.md").write_text("plan\n")
 
     monkeypatch.setattr(stormitem, "_detect_push", lambda owner, repo: True)
-    monkeypatch.setattr(stormitem, "_create_issue", lambda *a, **k: "https://github.com/zyplux/zyp-skills/issues/1")
+    monkeypatch.setattr(
+        stormitem,
+        "_create_issue",
+        lambda *a, **k: "https://github.com/zyplux/zyp-skills/issues/1",
+    )
     monkeypatch.setattr(stormitem, "_default_branch", lambda *a, **k: "main")
     monkeypatch.setattr(stormitem, "_ref_sha", lambda *a, **k: "sha")
     monkeypatch.setattr(stormitem, "_create_branch", lambda *a, **k: None)
     monkeypatch.setattr(stormitem, "_put_file", lambda *a, **k: None)
-    monkeypatch.setattr(stormitem, "_create_pr", lambda *a, **k: "https://github.com/zyplux/zyp-skills/pull/2")
+    monkeypatch.setattr(
+        stormitem,
+        "_create_pr",
+        lambda *a, **k: "https://github.com/zyplux/zyp-skills/pull/2",
+    )
     monkeypatch.setattr(stormitem, "_edit_issue", lambda *a, **k: None)
 
     invoke("post", "zyp-skills", str(work))
@@ -518,8 +628,7 @@ SKILLS_DIR = REPO_ROOT / "skills"
 def test_registry_features_match_skills_dir(stormitem):
     """The registry's `zyp-skills` features must match `os.listdir(skills/)`."""
     on_disk = sorted(
-        p.name for p in SKILLS_DIR.iterdir()
-        if p.is_dir() and (p / "SKILL.md").exists()
+        p.name for p in SKILLS_DIR.iterdir() if p.is_dir() and (p / "SKILL.md").exists()
     )
     _, registered = stormitem._resolve_repo("zyp-skills")
     assert sorted(registered) == on_disk, (

@@ -92,7 +92,9 @@ def _resolve_repo(short: str) -> tuple[str, list[str]]:
         raise typer.BadParameter(f"registry entry for {short!r} is missing `owner`")
     features = info.get("features") or []
     if not isinstance(features, list):
-        raise typer.BadParameter(f"registry entry for {short!r}: `features` must be a list")
+        raise typer.BadParameter(
+            f"registry entry for {short!r}: `features` must be a list"
+        )
     return owner, [str(f) for f in features]
 
 
@@ -137,7 +139,9 @@ def _validate_feature(feature: str, allowed: list[str]) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _gh(*args: str, stdin: str | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
+def _gh(
+    *args: str, stdin: str | None = None, check: bool = True
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["gh", *args],
         input=stdin,
@@ -163,11 +167,17 @@ def _gh_json(*args: str) -> Any:
 def _fetch_template(owner: str, repo: str, kind: str) -> tuple[str, str]:
     listing: list[dict[str, Any]] = []
     try:
-        payload = _gh_json("api", f"repos/{owner}/{repo}/contents/.github/ISSUE_TEMPLATE")
+        payload = _gh_json(
+            "api", f"repos/{owner}/{repo}/contents/.github/ISSUE_TEMPLATE"
+        )
     except subprocess.CalledProcessError:
         payload = None
     if isinstance(payload, list):
-        listing = [item for item in payload if isinstance(item, dict) and item.get("type") == "file"]
+        listing = [
+            item
+            for item in payload
+            if isinstance(item, dict) and item.get("type") == "file"
+        ]
     chosen = _match_template(listing, kind)
     if chosen is not None:
         body = _fetch_file(owner, repo, str(chosen["path"]))
@@ -224,7 +234,7 @@ def _parse_md_template(raw: str) -> tuple[dict[str, Any], str]:
         if end != -1:
             fm_text = raw[4:end]
             after = raw[end + len("\n---") :]
-            body = after[1:] if after.startswith("\n") else after
+            body = after.removeprefix("\n")
             try:
                 fm = yaml.safe_load(fm_text) or {}
             except yaml.YAMLError:
@@ -254,7 +264,9 @@ def _parse_yml_form(raw: str) -> tuple[dict[str, Any], str]:
             label = str(attrs.get("label") or "").strip()
             if not label:
                 continue
-            placeholder = str(attrs.get("placeholder") or attrs.get("description") or "").strip()
+            placeholder = str(
+                attrs.get("placeholder") or attrs.get("description") or ""
+            ).strip()
             sections.append(f"## {label}\n\n{placeholder}\n")
     body = "\n".join(sections) if sections else "## Details\n"
     return fm, body
@@ -289,9 +301,15 @@ def _render_issue(
 @app.command()
 def pull(
     repo: Annotated[str, typer.Argument(help="Short repo name (e.g. zyp-skills)")],
-    kind: Annotated[str, typer.Option("--kind", help="Conventional Commits type (feat, fix, ...)")],
-    feature: Annotated[str, typer.Option("--feature", help="Conventional Commits scope (per-repo)")],
-    title: Annotated[str, typer.Option("--title", help="Issue title (raw text; spaces ok)")],
+    kind: Annotated[
+        str, typer.Option("--kind", help="Conventional Commits type (feat, fix, ...)")
+    ],
+    feature: Annotated[
+        str, typer.Option("--feature", help="Conventional Commits scope (per-repo)")
+    ],
+    title: Annotated[
+        str, typer.Option("--title", help="Issue title (raw text; spaces ok)")
+    ],
 ) -> None:
     """Fetch an issue template, populate frontmatter, and write issue.md to a fresh tmp dir."""
     _validate_kind(kind)
@@ -335,7 +353,9 @@ def pull(
 
 def _detect_push(owner: str, repo: str) -> bool:
     try:
-        out = _gh("api", f"repos/{owner}/{repo}", "--jq", ".permissions.push").stdout.strip()
+        out = _gh(
+            "api", f"repos/{owner}/{repo}", "--jq", ".permissions.push"
+        ).stdout.strip()
     except subprocess.CalledProcessError:
         return False
     return out.lower() == "true"
@@ -373,7 +393,9 @@ def _create_branch(owner: str, repo: str, branch: str, sha: str) -> None:
     )
 
 
-def _put_file(owner: str, repo: str, path: str, message: str, content: str, branch: str) -> None:
+def _put_file(
+    owner: str, repo: str, path: str, message: str, content: str, branch: str
+) -> None:
     payload = json.dumps(
         {
             "message": message,
@@ -400,7 +422,16 @@ def _create_issue(
     labels: list[str],
     assignees: list[str],
 ) -> str:
-    args = ["issue", "create", "--repo", f"{owner}/{repo}", "--title", title, "--body", body]
+    args = [
+        "issue",
+        "create",
+        "--repo",
+        f"{owner}/{repo}",
+        "--title",
+        title,
+        "--body",
+        body,
+    ]
     for label in labels:
         args += ["--label", label]
     for assignee in assignees:
@@ -447,7 +478,11 @@ def _edit_issue(owner: str, repo: str, number: int, body: str) -> None:
 
 
 def _create_gist(plan_path: Path) -> str:
-    return _gh("gist", "create", "--filename", "plan.md", str(plan_path)).stdout.strip().splitlines()[-1]
+    return (
+        _gh("gist", "create", "--filename", "plan.md", str(plan_path))
+        .stdout.strip()
+        .splitlines()[-1]
+    )
 
 
 def _issue_number(url: str) -> int:
@@ -511,7 +546,9 @@ def post(
     fm, body = _parse_md_template(issue_path.read_text())
     stormitem_meta = fm.get("stormitem")
     if not isinstance(stormitem_meta, dict):
-        raise typer.BadParameter("issue.md is missing the `stormitem:` frontmatter block")
+        raise typer.BadParameter(
+            "issue.md is missing the `stormitem:` frontmatter block"
+        )
     if stormitem_meta.get("repo") != repo:
         raise typer.BadParameter(
             f"issue.md was prepared for repo {stormitem_meta.get('repo')!r}, not {repo!r}"
@@ -632,7 +669,9 @@ def _post_gist(
 
         last_step = "issue create"
         augmented = body.rstrip() + f"\n\n📋 [Storming plan]({gist_url})\n"
-        issue_url = _create_issue(owner, repo, issue_title, augmented, labels, assignees)
+        issue_url = _create_issue(
+            owner, repo, issue_title, augmented, labels, assignees
+        )
         issue_number = _issue_number(issue_url)
 
         return {
@@ -659,7 +698,11 @@ def registry() -> None:
     reg = _load_registry()
     repos = reg.get("repos", {})
     rows = [
-        {"repo": name, "owner": info.get("owner", ""), "features": list(info.get("features", []))}
+        {
+            "repo": name,
+            "owner": info.get("owner", ""),
+            "features": list(info.get("features", [])),
+        }
         for name, info in sorted(repos.items())
     ]
     print(encode({"repos": rows}))

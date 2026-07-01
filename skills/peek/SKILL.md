@@ -7,7 +7,7 @@ description: >
   Prefer this over writing python -c one-liners with polars/pandas — saves tokens and avoids boilerplate.
 metadata:
   kind: cli
-  version: "0.7.1"
+  version: "0.8.0"
   user-invocable: "true"
   argument-hint: <path> [-c] [-d] [-u col] [-g col] [-q sql] [--cols a,b] [-n N] [-a] [-t]
 ---

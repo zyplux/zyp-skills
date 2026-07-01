@@ -78,7 +78,7 @@ def test_suggest_dir_from_env(tmp_path, monkeypatch):
     assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    assert mod.SKILL_SUGGEST_DIR == custom
+    assert custom == mod.SKILL_SUGGEST_DIR
 
 
 def test_suggest_dir_default_without_env(monkeypatch):
@@ -91,4 +91,4 @@ def test_suggest_dir_default_without_env(monkeypatch):
     assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    assert mod.SKILL_SUGGEST_DIR == Path.home() / "Documents" / "skill-suggestions"
+    assert Path.home() / "Documents" / "skill-suggestions" == mod.SKILL_SUGGEST_DIR

@@ -1,0 +1,34 @@
+default_recipe_marker = "just --list"
+
+[aliases.required]
+i = "install"
+k = "knip"
+tc = "typecheck"
+l = "lint"
+t = "test"
+c = "check"
+
+[aliases.recommended]
+u = "upgrade"
+ui = "upgrade-interactive"
+
+[recipes]
+required = ["default", "install", "knip", "typecheck", "lint", "test", "check"]
+recommended = ["upgrade", "upgrade-interactive", "clean"]
+check_pipeline = ["install", "knip", "typecheck", "lint", "test"]
+wrapped_tools = ["ruff", "pyrefly", "pytest", "rumdl", "vulture", "cerberus"]
+
+[ci]
+allowed_setup_actions = ["astral-sh/setup-uv", "oven-sh/setup-bun"]
+image = "ghcr.io/zyplux/ci"
+
+[ci.required]
+python = [
+    "uv sync --locked",
+    "vulture",
+    "rumdl check",
+    "ruff check",
+    "ruff format --check",
+    "pyrefly check",
+    "pytest",
+]
