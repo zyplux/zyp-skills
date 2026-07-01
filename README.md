@@ -13,7 +13,7 @@ A collection of skills for Claude Code.
 | [mermaid](skills/mermaid/SKILL.md) | prompt | Pick the right Mermaid diagram type and render it correctly |
 | [plan-storm](skills/plan-storm/SKILL.md) | prompt | Brainstorm a `plan.md` through option-rich rounds before any code |
 
-Each skill declares `metadata.kind` in its SKILL.md: `cli` skills ship an executable (installed via `just si <name>`); `prompt` skills are SKILL.md-driven with no binary. Omitting `metadata.kind` defaults to `prompt`.
+Each skill declares `metadata.kind` in its SKILL.md: `cli` skills ship an executable; `prompt` skills are SKILL.md-driven with no binary. Omitting `metadata.kind` defaults to `prompt`.
 
 ## Development
 
@@ -25,13 +25,8 @@ just c           # full gate: install, knip (vulture), typecheck, lint, test —
 just l           # lint (autofixes)
 just tc          # typecheck
 just t           # test
-just si          # install every skill globally (from github main; force with FORCE=1)
-just si <name>   # install a single skill
-just su <name>   # uninstall a skill
 just p           # push branch + open draft PR (-r marks ready, waits, squash-merges)
 ```
-
-Skills declaring a `bin` in `package.json` are linked into `PATH` on install — via `npm link`, `bun link`, or `pnpm link --global` depending on which package manager is on `PATH`.
 
 ## GitHub apps
 

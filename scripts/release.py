@@ -23,7 +23,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 import typer
 
@@ -108,16 +108,16 @@ def diff_kind(base: str, current: str) -> DiffKind:
     if not bm or not cm:
         msg = f"non-semver: {base!r} or {current!r}"
         raise ValueError(msg)
-    bM, bn, bp = (int(g) for g in bm.groups())
-    cM, cn, cp = (int(g) for g in cm.groups())
-    if (cM, cn, cp) < (bM, bn, bp):
+    base_major, base_minor, base_patch = (int(g) for g in bm.groups())
+    current_major, current_minor, current_patch = (int(g) for g in cm.groups())
+    if (current_major, current_minor, current_patch) < (base_major, base_minor, base_patch):
         msg = f"current {current} is below base {base}"
         raise ValueError(msg)
-    if cM != bM:
+    if current_major != base_major:
         return "major"
-    if cn != bn:
+    if current_minor != base_minor:
         return "minor"
-    if cp != bp:
+    if current_patch != base_patch:
         return "patch"
     return "none"
 
@@ -165,9 +165,10 @@ def _apply_version_bump(skill: str, new_version: str) -> None:
 @app.command()
 def bump(
     skill: str = typer.Argument(..., help="Skill to bump."),
-    patch_: bool = typer.Option(False, "--patch", "-p"),
-    minor: bool = typer.Option(False, "--minor"),
-    major: bool = typer.Option(False, "--major"),
+    *,
+    patch_: Annotated[bool, typer.Option("--patch", "-p")] = False,
+    minor: Annotated[bool, typer.Option("--minor")] = False,
+    major: Annotated[bool, typer.Option("--major")] = False,
 ) -> None:
     """Bump <skill>'s version (default minor). Idempotent + higher-wins."""
     if sum([patch_, minor, major]) > 1:

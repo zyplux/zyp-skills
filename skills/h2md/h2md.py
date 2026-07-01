@@ -21,7 +21,7 @@ import subprocess
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, Any
 from urllib.parse import urlparse
 
 import httpx
@@ -33,6 +33,8 @@ from toon_format import decode, encode
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
+
+    from toon_format.types import JsonValue
 
 __version__ = "0.7.0"
 
@@ -119,7 +121,7 @@ def _collapse_code_spans(soup: BeautifulSoup) -> None:
             continue
         lang_classes = [c for c in _classes_from_tag(code) if c.startswith(("language-", "lang-", "highlight-"))]
         line_spans = code.find_all("span", class_="line")
-        text = "\n".join(_extract_line_span_text(ls) for ls in line_spans) if line_spans else code.get_text()
+        text = "\n".join(_extract_line_span_text(ls) for ls in line_spans) if len(line_spans) else code.get_text()
         code.clear()
         code.string = text
         if lang_classes:
@@ -244,7 +246,7 @@ def _reconstruct_terminal_regions(soup: BeautifulSoup) -> None:
         aria_label = str(region.get("aria-label") or "").lower()
         if not any(kw in aria_label for kw in terminal_keywords):
             continue
-        texts = []
+        texts: list[str] = []
         for el in region.descendants:
             if isinstance(el, NavigableString):
                 text = str(el).strip()
@@ -258,6 +260,9 @@ def _reconstruct_terminal_regions(soup: BeautifulSoup) -> None:
             region.replace_with(pre)
 
 
+_MIN_SIBLING_TAGS_TO_CLEAN = 2
+
+
 def _clean_code_containers(soup: BeautifulSoup) -> None:
     for pre in soup.find_all("pre"):
         parent = pre.parent
@@ -266,7 +271,7 @@ def _clean_code_containers(soup: BeautifulSoup) -> None:
         if parent.name in {"body", "article", "main", "section"}:
             continue
         children = [c for c in parent.children if isinstance(c, Tag)]
-        if len(children) < 2:
+        if len(children) < _MIN_SIBLING_TAGS_TO_CLEAN:
             continue
         for sibling in list(parent.children):
             if sibling is pre or not isinstance(sibling, Tag):
@@ -318,7 +323,25 @@ def _preprocess_dom(soup: BeautifulSoup) -> BeautifulSoup:
     return soup
 
 
-def _extract_article(soup: BeautifulSoup, raw_html: str, selector: str | None) -> str:
+_MIN_ARTICLE_TEXT_LENGTH = 100
+
+
+def _find_best_div(soup: BeautifulSoup) -> Tag | None:
+    best: Tag | None = None
+    best_score = 0
+    for div in soup.find_all("div"):
+        if not isinstance(div, Tag):
+            continue
+        p_count = len(div.find_all("p", recursive=False))
+        text_len = len(div.get_text(strip=True))
+        score = p_count * 100 + text_len
+        if score > best_score:
+            best_score = score
+            best = div
+    return best
+
+
+def _extract_article(soup: BeautifulSoup, selector: str | None) -> str:
     if selector:
         el = soup.select_one(selector)
         if el:
@@ -327,25 +350,16 @@ def _extract_article(soup: BeautifulSoup, raw_html: str, selector: str | None) -
     article = soup.find("article")
     if article and isinstance(article, Tag):
         text = article.get_text(strip=True)
-        if len(text) > 100:
+        if len(text) > _MIN_ARTICLE_TEXT_LENGTH:
             return str(article)
 
     main = soup.find("main")
     if main and isinstance(main, Tag):
         text = main.get_text(strip=True)
-        if len(text) > 100:
+        if len(text) > _MIN_ARTICLE_TEXT_LENGTH:
             return str(main)
 
-    best = None
-    best_len = 0
-    for div in soup.find_all("div"):
-        if isinstance(div, Tag):
-            p_count = len(div.find_all("p", recursive=False))
-            text_len = len(div.get_text(strip=True))
-            score = p_count * 100 + text_len
-            if score > best_len:
-                best_len = score
-                best = div
+    best = _find_best_div(soup)
     if best:
         return str(best)
 
@@ -372,16 +386,15 @@ _TW_MAP = {
 }
 
 
-def _extract_metadata(soup: BeautifulSoup) -> dict:
-    meta: dict = {}
-
+def _extract_jsonld_metadata(soup: BeautifulSoup, meta: dict[str, Any]) -> None:
     for script in soup.find_all("script", attrs={"type": "application/ld+json"}):
         try:
             data = json.loads(script.string or "")
         except json.JSONDecodeError, TypeError:
             continue
         if isinstance(data, list):
-            data = next((d for d in data if d.get("@type") in _JSONLD_ARTICLE_TYPES), {})
+            fallback_article: dict[str, Any] = {}
+            data = next((d for d in data if d.get("@type") in _JSONLD_ARTICLE_TYPES), fallback_article)
         if data.get("@type") not in _JSONLD_ARTICLE_TYPES:
             continue
         meta.setdefault("title", data.get("headline"))
@@ -395,6 +408,8 @@ def _extract_metadata(soup: BeautifulSoup) -> dict:
         meta.setdefault("description", data.get("description"))
         meta.setdefault("canonical_url", data.get("url"))
 
+
+def _extract_meta_tags(soup: BeautifulSoup, meta: dict[str, Any]) -> None:
     for tag in soup.find_all("meta"):
         prop = str(tag.get("property", ""))
         name = str(tag.get("name", "")).lower()
@@ -410,6 +425,8 @@ def _extract_metadata(soup: BeautifulSoup) -> dict:
         elif name == "description":
             meta.setdefault("description", content)
 
+
+def _extract_fallback_metadata(soup: BeautifulSoup, meta: dict[str, Any]) -> None:
     title_tag = soup.find("title")
     if title_tag:
         meta.setdefault("title", title_tag.get_text(strip=True))
@@ -422,6 +439,12 @@ def _extract_metadata(soup: BeautifulSoup) -> dict:
     if lang_tag and isinstance(lang_tag, Tag) and lang_tag.get("lang"):
         meta["lang"] = lang_tag["lang"]
 
+
+def _extract_metadata(soup: BeautifulSoup) -> dict[str, Any]:
+    meta: dict[str, Any] = {}
+    _extract_jsonld_metadata(soup, meta)
+    _extract_meta_tags(soup, meta)
+    _extract_fallback_metadata(soup, meta)
     return meta
 
 
@@ -431,7 +454,7 @@ def _extract(workspace: Path, selector: str | None) -> None:
     meta = _extract_metadata(raw_soup)
 
     soup = _preprocess_dom(raw_soup)
-    article_html = _extract_article(soup, raw_html, selector)
+    article_html = _extract_article(soup, selector)
     (workspace / "article.html").write_text(article_html)
 
     article_text = BeautifulSoup(article_html, "lxml").get_text(" ", strip=True)
@@ -485,7 +508,7 @@ def _assets(workspace: Path, *, no_assets: bool) -> None:
 # Stage 4: Convert (HTML -> Markdown)
 # ---------------------------------------------------------------------------
 
-LANG_PATTERNS: list[tuple[re.Pattern, str]] = [
+LANG_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"^\[[\w.-]+\]", re.MULTILINE), "toml"),
     (
         re.compile(r"^(curl|bun|npm|npx|docker|brew|apt|pip|yarn|pnpm|deno)\b", re.MULTILINE),
@@ -700,6 +723,8 @@ _MD_LINK_URL_RE = re.compile(r"\]\([^\)]+\)")
 _INLINE_CODE_RE = re.compile(r"`[^`]+`")
 _FRONTMATTER_RE = re.compile(r"\A---\n.*?^---", re.MULTILINE | re.DOTALL)
 
+_MIN_SNIFFABLE_CODE_LENGTH = 8
+
 
 def _exclusion_zones(md: str) -> list[tuple[int, int]]:
     zones: list[tuple[int, int]] = []
@@ -727,9 +752,8 @@ def _context_around(text: str, start: int, end: int, ctx: int = 40) -> str:
 def _normalize(workspace: Path) -> None:
     md = (workspace / "article.raw.md").read_text()
     meta_path = workspace / "meta.toon"
-    meta = decode(meta_path.read_text()) if meta_path.exists() else {}
-    if not isinstance(meta, dict):
-        meta = {}
+    decoded_meta: JsonValue = decode(meta_path.read_text()) if meta_path.exists() else {}
+    meta: dict[str, Any] = decoded_meta if isinstance(decoded_meta, dict) else {}
 
     frontmatter_lines = ["---"]
     if meta.get("title"):
@@ -796,14 +820,8 @@ def _lint(workspace: Path) -> None:
     (workspace / "lint.report.txt").write_text(result.stdout + result.stderr)
 
 
-def _detect(workspace: Path) -> list[dict]:
-    article = workspace / "article.md"
-    if not article.exists():
-        return []
-    md = article.read_text()
-    issues: list[dict] = []
-    zones = _exclusion_zones(md)
-
+def _detect_fused_text(md: str, zones: list[tuple[int, int]]) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
     for m in _FUSED_RE.finditer(md):
         if _in_exclusion_zone(m.start(), m.end(), zones):
             continue
@@ -815,7 +833,11 @@ def _detect(workspace: Path) -> list[dict]:
             "find": ctx,
             "fix": "verify whitespace between tokens",
         })
+    return issues
 
+
+def _detect_html_leakage(md: str) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
     for m in _HTML_LEAK_RE.finditer(md):
         line_num = md[: m.start()].count("\n") + 1
         ctx = _context_around(md, m.start(), m.end())
@@ -825,7 +847,11 @@ def _detect(workspace: Path) -> list[dict]:
             "find": ctx,
             "fix": "remove or convert to markdown",
         })
+    return issues
 
+
+def _detect_empty_blocks(md: str) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
     for m in _EMPTY_BLOCK_RE.finditer(md):
         line_num = md[: m.start()].count("\n") + 1
         ctx = _context_around(md, m.start(), m.end(), 20)
@@ -835,13 +861,17 @@ def _detect(workspace: Path) -> list[dict]:
             "find": ctx,
             "fix": "remove empty fence",
         })
+    return issues
 
+
+def _detect_wrong_language(md: str) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
     for m in _FENCE_LANG_RE.finditer(md):
         lang = m.group(1)
         if lang and lang != "text":
             continue
         content = m.group(2).strip()
-        if not content or len(content) < 8:
+        if not content or len(content) < _MIN_SNIFFABLE_CODE_LENGTH:
             continue
         sniffed = _sniff_language(content)
         if sniffed != "text":
@@ -852,7 +882,11 @@ def _detect(workspace: Path) -> list[dict]:
                 "detected": sniffed,
                 "fix": f"change fence to ```{sniffed}",
             })
+    return issues
 
+
+def _detect_suspicious_tab_labels(md: str) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
     lines = md.split("\n")
     for i, line in enumerate(lines[:-1]):
         if _TAB_LABEL_RE.match(line.strip()) and i + 1 < len(lines) and lines[i + 1].strip().startswith("```"):
@@ -863,18 +897,32 @@ def _detect(workspace: Path) -> list[dict]:
                 "find": ctx,
                 "fix": "merge as prose prefix or remove",
             })
-
     return issues
 
 
-def _build_sections(workspace: Path) -> list[dict]:
+def _detect(workspace: Path) -> list[dict[str, Any]]:
+    article = workspace / "article.md"
+    if not article.exists():
+        return []
+    md = article.read_text()
+    zones = _exclusion_zones(md)
+    return [
+        *_detect_fused_text(md, zones),
+        *_detect_html_leakage(md),
+        *_detect_empty_blocks(md),
+        *_detect_wrong_language(md),
+        *_detect_suspicious_tab_labels(md),
+    ]
+
+
+def _build_sections(workspace: Path) -> list[dict[str, Any]]:
     article = workspace / "article.md"
     if not article.exists():
         return []
     md = article.read_text()
     lines = md.split("\n")
 
-    sections: list[dict] = []
+    sections: list[dict[str, Any]] = []
     for i, line in enumerate(lines):
         m = re.match(r"^(#{1,6})\s+(.+)$", line)
         if m:
@@ -889,7 +937,7 @@ def _build_sections(workspace: Path) -> list[dict]:
     return sections
 
 
-def _postprocess(workspace: Path) -> tuple[list[dict], list[dict]]:
+def _postprocess(workspace: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     _normalize(workspace)
     _lint(workspace)
     issues = _detect(workspace)
@@ -902,16 +950,15 @@ def _postprocess(workspace: Path) -> tuple[list[dict], list[dict]]:
 # ---------------------------------------------------------------------------
 
 
-def _handoff(workspace: Path, url: str, issues: list[dict], sections: list[dict]) -> None:
+def _handoff(workspace: Path, url: str, issues: list[dict[str, Any]], sections: list[dict[str, Any]]) -> None:
     meta_path = workspace / "meta.toon"
-    meta = decode(meta_path.read_text()) if meta_path.exists() else {}
-    if not isinstance(meta, dict):
-        meta = {}
+    decoded_meta: JsonValue = decode(meta_path.read_text()) if meta_path.exists() else {}
+    meta: dict[str, Any] = decoded_meta if isinstance(decoded_meta, dict) else {}
     lint_path = workspace / "lint.report.txt"
     lint_text = lint_path.read_text() if lint_path.exists() else ""
     lint_remaining = len([ln for ln in lint_text.strip().split("\n") if ln.strip() and "not found" not in ln.lower()])
 
-    output: dict = {
+    output: dict[str, Any] = {
         "h2md": {
             "url": url,
             "workspace": str(workspace),
@@ -944,11 +991,12 @@ def _version_callback(*, value: bool) -> None:
 @app.command()
 def main(
     url: Annotated[str, typer.Argument(help="URL of the article to convert")],
+    *,
     no_assets: Annotated[bool, typer.Option("--no-assets", help="Skip image download")] = False,
     js: Annotated[bool, typer.Option("--js", help="JS rendering (requires playwright)")] = False,
     selector: Annotated[str | None, typer.Option("--selector", help="CSS selector for extraction")] = None,
     copy_to: Annotated[str | None, typer.Option("--copy-to", help="Copy article.md to this path")] = None,
-    version: Annotated[
+    _version: Annotated[
         bool | None,
         typer.Option("--version", callback=_version_callback, is_eager=True, help="Show version"),
     ] = None,
@@ -972,13 +1020,13 @@ def main(
             fn()
         except Exception as exc:
             typer.echo(f"Stage '{name}' failed: {exc}", err=True)
-            raise typer.Exit(1)
+            raise typer.Exit(1) from exc
 
     try:
         issues, sections = _postprocess(workspace)
     except Exception as exc:
         typer.echo(f"Stage 'postprocess' failed: {exc}", err=True)
-        raise typer.Exit(1)
+        raise typer.Exit(1) from exc
 
     if copy_to:
         shutil.copy2(workspace / "article.md", copy_to)

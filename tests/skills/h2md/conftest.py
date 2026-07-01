@@ -5,7 +5,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, override
 from unittest.mock import patch
 
 import pytest
@@ -46,7 +46,7 @@ def invoke(run: Callable[..., Result], h2md: ModuleType) -> Callable[..., Result
     return _invoke
 
 
-def _mock_subprocess_run(*args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+def _mock_subprocess_run(*args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
     return subprocess.CompletedProcess(args=args[0] if args else [], returncode=0, stdout="", stderr="")
 
 
@@ -71,7 +71,8 @@ def serve_html() -> Generator[Callable[..., str]]:
                 self.end_headers()
                 self.wfile.write(body)
 
-            def log_message(self, log_format: str, *args: object) -> None:
+            @override
+            def log_request(self, code: int | str = "-", size: int | str = "-") -> None:
                 pass
 
         server = HTTPServer(("127.0.0.1", 0), Handler)

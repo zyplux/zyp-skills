@@ -1,5 +1,7 @@
 """End-to-end tests for `release.py bump` driven through its typer CLI."""
 
+from __future__ import annotations
+
 import importlib.util
 import re
 import subprocess
@@ -12,12 +14,15 @@ from typer.testing import CliRunner
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from types import ModuleType
+
+    from typer.testing import Result
 
 RELEASE_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "release.py"
 VERSION_RE = re.compile(r'version:\s*"?([^"\s]+)"?')
 
 
-def _load_release_module():
+def _load_release_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location("release", RELEASE_SCRIPT)
     assert spec is not None
     assert spec.loader is not None
@@ -75,7 +80,7 @@ def make_skill(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Callable[...,
     return factory
 
 
-def _bump(skill: str, *flags: str):
+def _bump(skill: str, *flags: str) -> Result:
     return runner.invoke(release.app, ["bump", skill, *flags])
 
 
@@ -100,42 +105,42 @@ def _bump(skill: str, *flags: str):
         ("9.9.9", "9.9.9", "--major", "10.0.0"),
     ],
 )
-def test_bump(make_skill, base: str, current: str, flag: str, expected: str) -> None:
+def test_bump(make_skill: Callable[..., Path], base: str, current: str, flag: str, expected: str) -> None:
     skill_md = make_skill("foo", base, current)
     result = _bump("foo", flag)
     assert result.exit_code == 0, result.output
     assert _read_version(skill_md) == expected
 
 
-def test_default_bump_is_minor(make_skill) -> None:
+def test_default_bump_is_minor(make_skill: Callable[..., Path]) -> None:
     skill_md = make_skill("foo", "1.2.3")
     result = _bump("foo")
     assert result.exit_code == 0, result.output
     assert _read_version(skill_md) == "1.3.0"
 
 
-def test_short_patch_flag(make_skill) -> None:
+def test_short_patch_flag(make_skill: Callable[..., Path]) -> None:
     skill_md = make_skill("foo", "1.2.3")
     result = _bump("foo", "-p")
     assert result.exit_code == 0, result.output
     assert _read_version(skill_md) == "1.2.4"
 
 
-def test_unknown_skill_errors(make_skill) -> None:
+def test_unknown_skill_errors(make_skill: Callable[..., Path]) -> None:
     make_skill("foo", "1.0.0")
     result = _bump("ghost", "--patch")
     assert result.exit_code != 0
     assert "unknown skill" in result.output.lower()
 
 
-def test_skill_not_on_base_ref_is_no_op(make_skill) -> None:
+def test_skill_not_on_base_ref_is_no_op(make_skill: Callable[..., Path]) -> None:
     skill_md = make_skill("newbie", base=None, current="0.1.0")
     result = _bump("newbie", "--patch")
     assert result.exit_code == 0, result.output
     assert _read_version(skill_md) == "0.1.0"
 
 
-def test_conflicting_flags_error(make_skill) -> None:
+def test_conflicting_flags_error(make_skill: Callable[..., Path]) -> None:
     make_skill("foo", "1.0.0")
     result = _bump("foo", "--patch", "--minor")
     assert result.exit_code != 0

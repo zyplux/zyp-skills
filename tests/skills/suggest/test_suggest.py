@@ -4,12 +4,20 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from toon_format import decode
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
-def test_saves_suggestion_file(invoke, suggest_dir) -> None:
+    from typer.testing import Result
+
+SUGGESTION_COUNT = 2
+
+
+def test_saves_suggestion_file(invoke: Callable[..., Result], suggest_dir: Path) -> None:
     result = invoke("peek", "## Bug\n\nSomething broke")
     assert result.output.strip()
     files = list((suggest_dir / "peek").glob("suggestion_*.md"))
@@ -17,7 +25,7 @@ def test_saves_suggestion_file(invoke, suggest_dir) -> None:
     assert files[0].read_text() == "## Bug\n\nSomething broke\n"
 
 
-def test_output_is_toon(invoke, suggest_dir) -> None:
+def test_output_is_toon(invoke: Callable[..., Result]) -> None:
     result = invoke("peek", "test text")
     parsed = decode(result.output.strip())
     assert isinstance(parsed, dict)
@@ -25,22 +33,22 @@ def test_output_is_toon(invoke, suggest_dir) -> None:
     assert Path(parsed["saved"]).exists()
 
 
-def test_creates_skill_subdirectory(invoke, suggest_dir) -> None:
+def test_creates_skill_subdirectory(invoke: Callable[..., Result], suggest_dir: Path) -> None:
     invoke("newskill", "some suggestion")
     assert (suggest_dir / "newskill").is_dir()
 
 
-def test_multiple_suggestions_unique_files(invoke, suggest_dir) -> None:
+def test_multiple_suggestions_unique_files(invoke: Callable[..., Result], suggest_dir: Path) -> None:
     invoke("peek", "first")
     invoke("peek", "second")
     files = sorted((suggest_dir / "peek").glob("suggestion_*.md"))
-    assert len(files) == 2
+    assert len(files) == SUGGESTION_COUNT
     contents = {f.read_text() for f in files}
     assert "first\n" in contents
     assert "second\n" in contents
 
 
-def test_missing_args_fails(invoke) -> None:
+def test_missing_args_fails(invoke: Callable[..., Result]) -> None:
     result = invoke(expect_error=True)
     assert result.exit_code != 0
 
@@ -53,21 +61,21 @@ def test_missing_args_fails(invoke) -> None:
     ],
     ids=["omitted", "dash"],
 )
-def test_reads_stdin(invoke, suggest_dir, args, stdin) -> None:
+def test_reads_stdin(invoke: Callable[..., Result], suggest_dir: Path, args: list[str], stdin: str) -> None:
     invoke(*args, stdin=stdin)
     files = list((suggest_dir / "peek").glob("suggestion_*.md"))
     assert len(files) == 1
     assert files[0].read_text() == stdin + "\n"
 
 
-def test_markdown_content_preserved(invoke, suggest_dir) -> None:
+def test_markdown_content_preserved(invoke: Callable[..., Result], suggest_dir: Path) -> None:
     md = "## Feature request\n\n- bullet one\n- bullet two\n\n```python\nprint('hello')\n```"
     invoke("peek", md)
     files = list((suggest_dir / "peek").glob("suggestion_*.md"))
     assert files[0].read_text() == md + "\n"
 
 
-def test_suggest_dir_from_env(tmp_path, monkeypatch) -> None:
+def test_suggest_dir_from_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """SKILL_SUGGEST_DIR env var overrides the default directory."""
     custom = tmp_path / "custom-suggestions"
     monkeypatch.setenv("SKILL_SUGGEST_DIR", str(custom))
@@ -82,7 +90,7 @@ def test_suggest_dir_from_env(tmp_path, monkeypatch) -> None:
     assert custom == mod.SKILL_SUGGEST_DIR
 
 
-def test_suggest_dir_default_without_env(monkeypatch) -> None:
+def test_suggest_dir_default_without_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Without SKILL_SUGGEST_DIR env var, falls back to ~/Documents/skill-suggestions."""
     monkeypatch.delenv("SKILL_SUGGEST_DIR", raising=False)
     spec = importlib.util.spec_from_file_location(

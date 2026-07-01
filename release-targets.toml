@@ -1,0 +1,45 @@
+# Release targets for this repo. Read by cerberus's release-bumps check to enforce
+# a version bump whenever a skill's surface changes since its last tag. Skills aren't
+# published to any registry — the tag itself (e.g. `h2md-v0.7.0`) is the release marker.
+
+[[target]]
+label = "gen-commit-message"
+tag_prefix = "gen-commit-message-v"
+version = { file = "skills/gen-commit-message/SKILL.md", regex = '^\s*version:\s*"([^"]+)"' }
+surface = ["skills/gen-commit-message"]
+
+[[target]]
+label = "h2md"
+tag_prefix = "h2md-v"
+version = { file = "skills/h2md/SKILL.md", regex = '^\s*version:\s*"([^"]+)"' }
+surface = ["skills/h2md"]
+
+[[target]]
+label = "mermaid"
+tag_prefix = "mermaid-v"
+version = { file = "skills/mermaid/SKILL.md", regex = '^\s*version:\s*"([^"]+)"' }
+surface = ["skills/mermaid"]
+
+[[target]]
+label = "peek"
+tag_prefix = "peek-v"
+version = { file = "skills/peek/SKILL.md", regex = '^\s*version:\s*"([^"]+)"' }
+surface = ["skills/peek"]
+
+[[target]]
+label = "plan-storm"
+tag_prefix = "plan-storm-v"
+version = { file = "skills/plan-storm/SKILL.md", regex = '^\s*version:\s*"([^"]+)"' }
+surface = ["skills/plan-storm"]
+
+[[target]]
+label = "stormitem"
+tag_prefix = "stormitem-v"
+version = { file = "skills/stormitem/SKILL.md", regex = '^\s*version:\s*"([^"]+)"' }
+surface = ["skills/stormitem"]
+
+[[target]]
+label = "suggest"
+tag_prefix = "suggest-v"
+version = { file = "skills/suggest/SKILL.md", regex = '^\s*version:\s*"([^"]+)"' }
+surface = ["skills/suggest"]

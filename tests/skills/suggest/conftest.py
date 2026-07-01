@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Generator
+    from collections.abc import Callable
     from pathlib import Path
     from types import ModuleType
 
@@ -18,17 +18,9 @@ def suggest(skill_loader: Callable[[str], ModuleType]) -> ModuleType:
 
 
 @pytest.fixture(autouse=True)
-def suggest_dir(suggest: ModuleType, tmp_path: Path) -> Generator[Path]:
-    """Redirect SKILL_SUGGEST_DIR to tmp_path for test isolation.
-
-    In production, the directory is configured via the SKILL_SUGGEST_DIR env var
-    (defaulting to ~/Documents/skill-suggestions). Tests override the module
-    attribute directly for simplicity.
-    """
-    original = suggest.SKILL_SUGGEST_DIR
-    suggest.SKILL_SUGGEST_DIR = tmp_path
-    yield tmp_path
-    suggest.SKILL_SUGGEST_DIR = original
+def suggest_dir(suggest: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    monkeypatch.setattr(suggest, "SKILL_SUGGEST_DIR", tmp_path)
+    return tmp_path
 
 
 @pytest.fixture

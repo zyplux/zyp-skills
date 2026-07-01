@@ -6,8 +6,6 @@ alias tc := typecheck
 alias l := lint
 alias t := test
 alias c := check
-alias si := skill-install
-alias su := skill-uninstall
 alias u := upgrade
 alias ui := upgrade-interactive
 alias p := push
@@ -53,17 +51,9 @@ test *args:
 # Full gate: install, knip, typecheck, lint, test — autofix throughout.
 check: install knip typecheck lint test
 
-# Install a skill globally (omit name to install all stale skills; FORCE=1 reinstalls all)
-skill-install name="":
-    @uv run scripts/skillman.py install {{ name }}
-
-# Uninstall a skill globally
-skill-uninstall name:
-    @uv run scripts/skillman.py uninstall {{ name }}
-
 # Push current branch; opens a draft PR (-r marks ready and enables auto-merge)
 push *flags:
-    @uv run scripts/pusher.py {{ flags }}
+    bunx @zyplux/cz@0.2.2 push-branch {{ flags }}
 
 # Bump <skill>'s version (default --minor; -p/--patch, --major). Idempotent + higher-wins.
 bump *args:

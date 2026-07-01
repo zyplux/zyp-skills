@@ -48,7 +48,7 @@ def main(
         str | None,
         typer.Argument(help="Markdown: Context, Gap, Responsibility, Suggestion, Impact. Use '-' to read from stdin."),
     ] = None,
-    version: Annotated[
+    _version: Annotated[
         bool | None,
         typer.Option(
             "--version",
@@ -61,7 +61,6 @@ def main(
     """Submit a structured improvement suggestion for a skill — what fell short and what should change."""
     if text is None or text == "-":
         text = sys.stdin.read()
-    assert text is not None
     if not text.strip():
         msg = "Suggestion text cannot be empty"
         raise typer.BadParameter(msg)

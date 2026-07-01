@@ -265,7 +265,7 @@ def _parse_md_template(raw: str) -> tuple[dict[str, Any], str]:
             try:
                 fm = yaml.safe_load(fm_text) or {}
             except yaml.YAMLError:
-                fm = {}
+                fm: dict[str, Any] = {}
             if isinstance(fm, dict):
                 return fm, body.lstrip("\n")
     return {}, raw

@@ -10,9 +10,16 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
-from skills_ref import read_properties
+from skills_ref import SkillError, read_properties
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from types import ModuleType
+
+    from typer.testing import CliRunner
 
 SKILLS_DIR = Path(__file__).resolve().parents[2] / "skills"
 
@@ -22,7 +29,7 @@ def _is_cli(skill_dir: Path) -> bool:
         return False
     try:
         props = read_properties(skill_dir)
-    except Exception:
+    except SkillError:
         return False
     return (props.metadata or {}).get("kind", "prompt") == "cli"
 
@@ -31,16 +38,16 @@ SKILL_NAMES = sorted(p.name for p in SKILLS_DIR.iterdir() if p.is_dir() and _is_
 
 
 @pytest.fixture(params=[pytest.param(n, id=n) for n in SKILL_NAMES])
-def skill(request, skill_loader):
+def skill(request: pytest.FixtureRequest, skill_loader: Callable[[str], ModuleType]) -> ModuleType:
     return skill_loader(request.param)
 
 
-def test_help(skill, runner) -> None:
+def test_help(skill: ModuleType, runner: CliRunner) -> None:
     result = runner.invoke(skill.app, ["--help"])
     assert result.exit_code == 0
 
 
-def test_version(skill, runner) -> None:
+def test_version(skill: ModuleType, runner: CliRunner) -> None:
     result = runner.invoke(skill.app, ["--version"])
     assert result.exit_code == 0
     assert skill.__version__ in result.output
@@ -52,7 +59,7 @@ def _skill_md_version(skill_dir: Path) -> str:
     return m.group(1) if m else ""
 
 
-def test_version_consistent(skill, runner) -> None:
+def test_version_consistent(skill: ModuleType) -> None:
     skill_dir = SKILLS_DIR / skill.__name__
     py_version = skill.__version__
     md_version = _skill_md_version(skill_dir)

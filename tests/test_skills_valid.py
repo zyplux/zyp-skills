@@ -1,18 +1,15 @@
 """Validate every skill in the repo against the Agent Skills spec."""
 
 import re
-import subprocess
 from pathlib import Path
 
 import pytest
 from skills_ref import read_properties, validate
 
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
-SKILL_MD_VERSION_READ_RE = re.compile(r'^\s*version:\s*"?([^"\s]+)"?\s*$', re.MULTILINE)
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = REPO_ROOT / "skills"
 SKILL_DIRS = sorted(p for p in SKILLS_DIR.iterdir() if p.is_dir() and (p / "SKILL.md").exists())
-BASE_REF = "origin/main"
 
 
 @pytest.fixture(params=[pytest.param(d, id=d.name) for d in SKILL_DIRS])
@@ -42,47 +39,6 @@ def test_skill_has_semver_version(skill_dir: Path) -> None:
     assert SEMVER_RE.match(version), (
         f"Skill '{skill_dir.name}' has metadata.version={version!r}; "
         f"expected MAJOR.MINOR.PATCH with no pre-release suffix."
-    )
-
-
-def test_skill_changes_require_version_bump(skill_dir: Path) -> None:
-    """If the skill changed vs origin/main, its SKILL.md version must too.
-
-    Run `just bump <skill>` to bump (default minor; -p for patch, --major).
-    The bump is idempotent + higher-wins, so re-running won't double-bump.
-    """
-    has_base = subprocess.run(
-        ["git", "rev-parse", "--verify", BASE_REF],
-        cwd=REPO_ROOT,
-        capture_output=True,
-    )
-    if has_base.returncode != 0:
-        pytest.skip(f"{BASE_REF} not fetched; run `git fetch origin main` to enable")
-    rel = skill_dir.relative_to(REPO_ROOT).as_posix()
-    diff = subprocess.run(
-        ["git", "diff", "--quiet", BASE_REF, "--", rel],
-        cwd=REPO_ROOT,
-    )
-    if diff.returncode == 0:
-        return
-    main_md = subprocess.run(
-        ["git", "show", f"{BASE_REF}:{rel}/SKILL.md"],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
-    if main_md.returncode != 0:
-        return
-    main_match = SKILL_MD_VERSION_READ_RE.search(main_md.stdout)
-    if main_match is None:
-        return
-    main_version = main_match.group(1)
-    current_match = SKILL_MD_VERSION_READ_RE.search((skill_dir / "SKILL.md").read_text())
-    assert current_match is not None, f"{skill_dir.name}/SKILL.md has no version field"
-    current_version = current_match.group(1)
-    assert current_version != main_version, (
-        f"{skill_dir.name} has changes vs {BASE_REF} but version is still {current_version}. "
-        f"Run `just bump {skill_dir.name}` (default minor; -p for patch, --major)."
     )
 
 
