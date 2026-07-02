@@ -1,3 +1,4 @@
+# BASELINE
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 alias i := install
@@ -9,58 +10,80 @@ alias c := check
 alias u := upgrade
 alias ui := upgrade-interactive
 alias p := push
-alias b := bump
+alias pr := push-ready
 
 # List available recipes.
 default:
     @just --list
 
-# Install Python dependencies (all groups).
+# Install both workspaces: bun + uv.
 install:
-    uv sync --all-groups
+    bun install
+    uv sync --all-packages --all-groups
 
-# Upgrade all dependencies to latest compatible versions and reinstall.
-upgrade:
-    uv lock --upgrade
-    uvx uv-bump -v
-    uv sync --all-groups
-
-# Interactively upgrade dependencies (uv has no interactive mode; alias kept for parity with zyplux).
-upgrade-interactive: upgrade
-
-# Find dead code via vulture.
+# Report unused files, deps, and exports: knip (JS workspace) + vulture (Python).
 knip:
-    uv run --group lint vulture
+    bun run knip
+    uv run vulture
 
-# Type-check via pyrefly.
+# Type-check both workspaces: tsc/bun for .ts, pyrefly for .py.
 typecheck:
-    uv run --group typecheck pyrefly check
+    bun run typecheck
+    uv run pyrefly check
 
-# Lint with autofix: rumdl + ruff, then verify org invariants with cerberus.
+# Lint and format both workspaces with autofix, then verify org invariants with cerberus.
 lint:
-    uv run --group lint rumdl check --fix
-    uv run --group lint rumdl fmt
-    uv run --group lint ruff check --fix
-    uv run --group lint ruff format
-    uv run --group lint cerberus --fix
+    bun run lint:fix
+    bun run format
+    uv run rumdl check --fix
+    uv run rumdl fmt
+    uv run ruff check --fix
+    uv run ruff format
+    uv run cerberus --fix
 
-# Run tests via pytest. Use `--` to forward dash-flagged args (e.g. `just t -- -k expr`).
-test *args:
-    uv run --group test pytest {{ args }}
+# Run tests for both workspaces. Optional arg filters by test name; never fails when nothing matches.
+test name='':
+    bun run test {{ if name == '' { '' } else { '-t "' + name + '" --passWithNoTests' } }}
+    uv run pytest {{ if name == '' { '' } else { '-k "' + name + '"' } }} || [ "$?" -eq 5 ]
 
-# Full gate: install, knip, typecheck, lint, test — autofix throughout.
+# Full gate across both workspaces: install, knip, typecheck, lint, test — autofix throughout.
 check: install knip typecheck lint test
 
-# Push current branch; opens a draft PR (-r marks ready and enables auto-merge)
+# Upgrade deps across both workspaces: ncu bumps JS ranges; uv lock --upgrade + uv-bump raise Python >= floors. Forwards extra args to ncu.
+upgrade *args='':
+    bun run upgrade -- {{ args }}
+    uv lock --upgrade
+    uvx uv-bump -v
+    uv sync --all-packages --all-groups
+
+# Interactively select JS upgrades, then non-interactively upgrade Python (uv has no interactive mode) and reinstall both.
+upgrade-interactive:
+    bun run upgrade -- -i
+    bun install
+    uv lock --upgrade
+    uvx uv-bump -v
+    uv sync --all-packages --all-groups
+
+# Push the current branch and open a draft PR (-r/--ready marks it ready and enables auto-merge).
 push *flags:
-    bunx @zyplux/cz@0.2.2 push-branch {{ flags }}
+    bun run cz push-branch {{ flags }}
+
+# Push the current branch and open a PR marked ready, enabling auto-merge.
+push-ready: (push "--ready")
+
+# Remove deps and caches from all workspaces.
+clean:
+    rm -rf node_modules packages/*/node_modules tests/*/node_modules
+    rm -rf .venv .pytest_cache .ruff_cache .rumdl_cache .eslintcache .tsbuild
+    find . -type d \( -name __pycache__ -o -name .tsbuild -o -name dist -o -name .ruff_cache -o -name .pytest_cache \) -prune -exec rm -rf {} +
+    find . -type f \( -name '*.tsbuildinfo' -o -name '.eslintcache' -o -name '*.py[cod]' \) -delete
+
+# Shallow-clone a reference repo into reference_clones/ (optional branch or tag).
+clone repo ref="":
+    bun run cz clone-reference-repo {{ repo }} {{ ref }}
+
+# CUSTOM
 
 # Bump <skill>'s version (default --minor; -p/--patch, --major). Idempotent + higher-wins.
 bump *args:
     @uv run scripts/release.py bump {{ args }}
-
-# Remove deps and caches.
-clean:
-    rm -rf .venv .pytest_cache .ruff_cache .rumdl_cache
-    find . -type d -name __pycache__ -prune -exec rm -rf {} +
-    find . -type f -name '*.py[cod]' -delete
