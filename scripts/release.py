@@ -62,9 +62,10 @@ class ToolNotFoundError(RuntimeError):
 def _git_show(ref: str, path: str) -> str | None:
     """The single audited subprocess boundary for release.
 
-    `git` is resolved to an absolute path via PATH, the remaining args are
-    program-constructed (never user-derived), and the shell is never invoked, so
-    there is no command-injection surface.
+    `git` is resolved to an absolute path via PATH and args are passed as a
+    list, so the shell is never invoked and nothing is shell-interpreted.
+    `ref` is program-constructed; `path` may embed a validated CLI argument,
+    and a hostile value can at worst address a nonexistent blob, yielding None.
     """
     executable = shutil.which("git")
     if executable is None:

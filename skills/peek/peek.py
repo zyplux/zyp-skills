@@ -175,10 +175,12 @@ def _groupby(con: duckdb.DuckDBPyConnection, columns: str) -> dict[str, Any]:
 
 def _register_tables(con: duckdb.DuckDBPyConnection, paths: list[Path]) -> list[str]:
     names = ["t"]
-    con.read_parquet(str(paths[0])).create_view("t")
     for i, p in enumerate(paths, 1):
+        rel = con.read_parquet(str(p))
+        if i == 1:
+            rel.create_view("t")
         name = f"t{i}"
-        con.read_parquet(str(p)).create_view(name)
+        rel.create_view(name)
         names.append(name)
     return names
 
