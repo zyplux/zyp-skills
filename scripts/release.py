@@ -49,7 +49,7 @@ def _cli() -> None:
 
 
 def read_skill_md_version(skill_dir: Path) -> str | None:
-    text = (skill_dir / "SKILL.md").read_text()
+    text = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
     m = SKILL_MD_VERSION_READ_RE.search(text)
     return m.group(1) if m else None
 
@@ -176,6 +176,9 @@ def bump(
         msg = "pass at most one of --patch / --minor / --major"
         raise typer.BadParameter(msg)
     requested: BumpKind = "major" if major else "patch" if patch_ else "minor"
+    if skill == ".." or Path(skill).name != skill:
+        msg = f"invalid skill name: {skill!r}"
+        raise typer.BadParameter(msg)
     skill_dir = SKILLS_DIR / skill
     if not (skill_dir / "SKILL.md").exists():
         msg = f"unknown skill: {skill}"

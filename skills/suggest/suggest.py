@@ -37,7 +37,7 @@ def _save(skill: str, text: str) -> Path:
     skill_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S_%f")
     path = skill_dir / f"suggestion_{ts}.md"
-    path.write_text(text + "\n")
+    path.write_text(text + "\n", encoding="utf-8")
     return path
 
 

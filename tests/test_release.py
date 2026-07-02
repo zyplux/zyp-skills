@@ -140,6 +140,18 @@ def test_skill_not_on_base_ref_is_no_op(make_skill: Callable[..., Path]) -> None
     assert _read_version(skill_md) == "0.1.0"
 
 
+@pytest.mark.parametrize("skill", ["../evil", "evil/../evil", "..", "sub/evil"])
+def test_skill_name_with_path_separators_errors(
+    make_skill: Callable[..., Path], tmp_path: Path, skill: str
+) -> None:
+    make_skill("evil", "1.0.0")
+    (tmp_path / "evil").mkdir()
+    _write_skill(tmp_path / "evil" / "SKILL.md", "1.0.0")
+    result = _bump(skill, "--patch")
+    assert result.exit_code != 0
+    assert "invalid skill name" in result.output.lower()
+
+
 def test_conflicting_flags_error(make_skill: Callable[..., Path]) -> None:
     make_skill("foo", "1.0.0")
     result = _bump("foo", "--patch", "--minor")
