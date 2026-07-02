@@ -50,13 +50,13 @@ To begin an architecture diagram, use the keyword `architecture-beta`, followed 
 
 The syntax for declaring a group is:
 
-```
+```text
 group {group id}({icon name})[{title}] (in {parent id})?
 ```
 
 Put together:
 
-```
+```text
 group public_api(cloud)[Public API]
 ```
 
@@ -64,7 +64,7 @@ creates a group identified as `public_api`, uses the icon `cloud`, and has the l
 
 Additionally, groups can be placed within a group using the optional `in` keyword
 
-```
+```text
 group private_api(cloud)[Private API] in public_api
 ```
 
@@ -72,13 +72,13 @@ group private_api(cloud)[Private API] in public_api
 
 The syntax for declaring a service is:
 
-```
+```text
 service {service id}({icon name})[{title}] (in {parent id})?
 ```
 
 Put together:
 
-```
+```text
 service database1(database)[My Database]
 ```
 
@@ -86,7 +86,7 @@ creates the service identified as `database1`, using the icon `database`, with t
 
 If the service belongs to a group, it can be placed inside it through the optional `in` keyword
 
-```
+```text
 service database1(database)[My Database] in private_api
 ```
 
@@ -94,7 +94,7 @@ service database1(database)[My Database] in private_api
 
 The syntax for declaring an edge is:
 
-```
+```text
 {serviceId}{{group}}?:{T|B|L|R} {<}?--{>}? {T|B|L|R}:{serviceId}{{group}}?
 ```
 
@@ -104,13 +104,13 @@ The side of the service the edge comes out of is specified by adding a colon (`:
 
 For example:
 
-```
+```text
 db:R -- L:server
 ```
 
 creates an edge between the services `db` and `server`, with the edge coming out of the right of `db` and the left of `server`.
 
-```
+```text
 db:T -- L:server
 ```
 
@@ -122,7 +122,7 @@ Arrows can be added to each side of an edge by adding `<` before the direction o
 
 For example:
 
-```
+```text
 subnet:R --> L:gateway
 ```
 
@@ -134,7 +134,7 @@ To have an edge go from a group to another group or service within another group
 
 For example:
 
-```
+```text
 service server[Server] in groupOne
 service subnet[Subnet] in groupTwo
 
@@ -149,7 +149,7 @@ It's important to note that `groupId`s cannot be used for specifying edges and t
 
 When several services share similar edge topology (for example, three databases all connecting `R --> L:mcp`), the layout heuristic may collapse them onto the same coordinate so that two render on top of each other. The `align` directive declares that a set of services share a row (same y) or a column (same x), and forces them to spread along that axis.
 
-```
+```text
 align row {idA} {idB} {idC} ...
 align column {idA} {idB} ...
 ```
@@ -299,7 +299,7 @@ Junctions are a special type of node which acts as a potential 4-way split betwe
 
 The syntax for declaring a junction is:
 
-```
+```text
 junction {junction id} (in {parent id})?
 ```
 
@@ -349,7 +349,7 @@ By default, architecture diagrams start nodes at deterministic seed positions (`
 
 Via frontmatter:
 
-```
+```text
 %%{init: {"architecture": {"randomize": true}}}%%
 architecture-beta
     group api(cloud)[API]
@@ -386,7 +386,7 @@ The following options pass through to the underlying [fcose](https://github.com/
 
 Example — bumping `idealEdgeLengthMultiplier` stretches the spacing between connected nodes in a chain:
 
-```
+```text
 %%{init: {"architecture": {"idealEdgeLengthMultiplier": 3}}}%%
 architecture-beta
     service a(server)[A]
