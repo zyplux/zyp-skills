@@ -56,10 +56,10 @@ def test_n_5(invoke: Callable[..., Result]) -> None:
 @pytest.mark.parametrize("n", [3, 50])
 def test_preview_respects_n(invoke: Callable[..., Result], decode: Callable[[str], dict[str, Any]], n: int) -> None:
     result = invoke("preview", "-n", str(n))
-    assert len(decode(result.output.strip())["tourney_points"]) == min(n, 94)
+    assert len(decode(result.output.strip())["tourney_points"]) == min(n, TOTAL_ROWS)
 
 
-@pytest.mark.parametrize("n", [94, 200], ids=["exact", "overshoot"])
+@pytest.mark.parametrize("n", [TOTAL_ROWS, 200], ids=["exact", "overshoot"])
 def test_n_gte_total_hides_rows(invoke: Callable[..., Result], n: int) -> None:
     result = invoke("preview", "-n", str(n))
     assert "rows" not in result.output

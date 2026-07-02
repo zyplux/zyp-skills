@@ -227,8 +227,8 @@ def _resolve_all(path_patterns: list[str]) -> list[Path]:
 
 def _run_per_path(paths: list[Path], render: Callable[[duckdb.DuckDBPyConnection, str], str]) -> None:
     for i, p in enumerate(paths):
-        con = _connect(p)
-        typer.echo(render(con, p.stem))
+        with _connect(p) as con:
+            typer.echo(render(con, p.stem))
         if i < len(paths) - 1:
             typer.echo()
 
@@ -286,9 +286,9 @@ def sql(
     query: Annotated[str, typer.Option("-q", "--query", help="SQL query (tables: t, t1, t2, ...)")],
 ) -> None:
     """Run a DuckDB SQL query against the file(s) (tables: t, t1, t2, ...)."""
-    con = duckdb.connect()
-    table_names = _register_tables(con, _resolve_all(path))
-    typer.echo(encode(_sql(con, query, table_names)))
+    with duckdb.connect() as con:
+        table_names = _register_tables(con, _resolve_all(path))
+        typer.echo(encode(_sql(con, query, table_names)))
 
 
 if __name__ == "__main__":

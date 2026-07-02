@@ -16,7 +16,7 @@ from toon_format import decode as _decode
 from typer.testing import CliRunner
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
     from types import ModuleType
 
     from typer.main import Typer
@@ -60,7 +60,7 @@ def run(runner: CliRunner) -> Callable[..., Result]:
     defaults (fixture paths, stdin input, etc.).
     """
 
-    def _run(app: Typer, args: list[str], *, expect_error: bool = False, stdin: str | None = None) -> Result:
+    def _run(app: Typer, args: Sequence[str], *, expect_error: bool = False, stdin: str | None = None) -> Result:
         result = runner.invoke(app, list(args), input=stdin)
         if not expect_error:
             assert result.exit_code == 0, result.output

@@ -40,7 +40,7 @@ __version__ = "0.7.0"
 
 app = typer.Typer()
 
-USER_AGENT = "Mozilla/5.0 (compatible; h2md/0.1; +https://github.com/totvibe/skills)"
+USER_AGENT = f"Mozilla/5.0 (compatible; h2md/{__version__}; +https://github.com/zyplux/zyp-skills)"
 
 STRIP_TAGS = {"script", "style", "button", "svg", "nav", "footer", "header", "noscript"}
 INLINE_TAGS = {
