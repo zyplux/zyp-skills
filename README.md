@@ -32,6 +32,5 @@ just p           # push branch + open draft PR (-r marks ready, waits, squash-me
 
 Three apps must be installed on the repo for the workflows to work end-to-end:
 
-- [Settings](https://github.com/apps/settings) — applies [.github/settings.yml](.github/settings.yml) (branch protection, merge mode, code owners) on every push.
 - [Claude Code](https://github.com/apps/claude) — powers PR review, draft-PR summary, and `@claude` mentions.
 - GitHub Copilot — second AI reviewer, enabled in repo settings.
