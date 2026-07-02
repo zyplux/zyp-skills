@@ -1,5 +1,21 @@
-__pycache__/
+# JavaScript / bun
+node_modules/
+dist/
+.tsbuild/
+*.tsbuildinfo
+.eslintcache
+coverage/
+
+# Python / uv
 .venv/
+__pycache__/
+*.py[cod]
 .pytest_cache/
 .ruff_cache/
-.rumdl_cache
+.rumdl_cache/
+.coverage
+
+reference_clones/
+
+# OS
+.DS_Store
