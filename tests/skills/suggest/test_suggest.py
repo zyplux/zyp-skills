@@ -48,7 +48,7 @@ def test_multiple_suggestions_unique_files(invoke: Callable[..., Result], sugges
     assert "second\n" in contents
 
 
-@pytest.mark.parametrize("skill", ["../outside", "a/../b", "..", "sub/skill"])
+@pytest.mark.parametrize("skill", ["../outside", "a/../b", "..", ".", "sub/skill"])
 def test_skill_name_with_path_separators_errors(invoke: Callable[..., Result], skill: str) -> None:
     result = invoke(skill, "some suggestion", expect_error=True)
     assert result.exit_code != 0

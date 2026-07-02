@@ -140,7 +140,7 @@ def test_skill_not_on_base_ref_is_no_op(make_skill: Callable[..., Path]) -> None
     assert _read_version(skill_md) == "0.1.0"
 
 
-@pytest.mark.parametrize("skill", ["../evil", "evil/../evil", "..", "sub/evil"])
+@pytest.mark.parametrize("skill", ["../evil", "evil/../evil", "..", ".", "sub/evil"])
 def test_skill_name_with_path_separators_errors(make_skill: Callable[..., Path], tmp_path: Path, skill: str) -> None:
     make_skill("evil", "1.0.0")
     (tmp_path / "evil").mkdir()
