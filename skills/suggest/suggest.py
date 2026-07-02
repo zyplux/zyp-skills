@@ -59,6 +59,9 @@ def main(
     ] = None,
 ) -> None:
     """Submit a structured improvement suggestion for a skill — what fell short and what should change."""
+    if skill == ".." or Path(skill).name != skill:
+        msg = f"invalid skill name: {skill!r}"
+        raise typer.BadParameter(msg)
     if text is None or text == "-":
         text = sys.stdin.read()
     if not text.strip():
