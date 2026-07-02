@@ -1,7 +1,13 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
-def test_fused_text_detected(pipeline):
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from types import SimpleNamespace
+
+
+def test_fused_text_detected(pipeline: Callable[..., SimpleNamespace]) -> None:
     fused = "a" * 90
     html = f"""<!DOCTYPE html><html><body><article>
     <h1>Title</h1>
@@ -11,7 +17,7 @@ def test_fused_text_detected(pipeline):
     assert any(i["type"] == "fused text" for i in r.issues)
 
 
-def test_html_leakage_detected(pipeline):
+def test_html_leakage_detected(pipeline: Callable[..., SimpleNamespace]) -> None:
     html = """<!DOCTYPE html><html><body><article>
     <h1>Title</h1>
     <p>Some text <svg viewBox="0 0 10 10"><path d="M0"/></svg> leftover content.</p>
@@ -20,12 +26,12 @@ def test_html_leakage_detected(pipeline):
     assert any(i["type"] == "HTML leakage" for i in r.issues) or "svg" not in r.md.lower()
 
 
-def test_clean_content_no_issues(pipeline, read_fixture):
+def test_clean_content_no_issues(pipeline: Callable[..., SimpleNamespace], read_fixture: Callable[[str], str]) -> None:
     r = pipeline(read_fixture("simple_article.html"))
     assert r.issues == []
 
 
-def test_url_in_markdown_link_not_flagged_as_fused(pipeline):
+def test_url_in_markdown_link_not_flagged_as_fused(pipeline: Callable[..., SimpleNamespace]) -> None:
     long_url = "https://github.com/microsoft/TypeScript/pull/62243/files/very-long-path"
     html = f"""<!DOCTYPE html><html><body><article>
     <h1>Title</h1>
@@ -35,7 +41,7 @@ def test_url_in_markdown_link_not_flagged_as_fused(pipeline):
     assert all(i["type"] != "fused text" for i in r.issues)
 
 
-def test_medium_string_not_flagged_as_fused(pipeline):
+def test_medium_string_not_flagged_as_fused(pipeline: Callable[..., SimpleNamespace]) -> None:
     medium = "a" * 60
     html = f"""<!DOCTYPE html><html><body><article>
     <h1>Title</h1>
@@ -45,7 +51,7 @@ def test_medium_string_not_flagged_as_fused(pipeline):
     assert all(i["type"] != "fused text" for i in r.issues)
 
 
-def test_long_string_inside_code_fence_not_flagged(pipeline):
+def test_long_string_inside_code_fence_not_flagged(pipeline: Callable[..., SimpleNamespace]) -> None:
     long_import = "a" * 90
     html = f"""<!DOCTYPE html><html><body><article>
     <h1>Title</h1>
@@ -56,7 +62,7 @@ def test_long_string_inside_code_fence_not_flagged(pipeline):
     assert all(i["type"] != "fused text" for i in r.issues)
 
 
-def test_inline_code_not_flagged_as_fused(pipeline):
+def test_inline_code_not_flagged_as_fused(pipeline: Callable[..., SimpleNamespace]) -> None:
     long_id = "x" * 90
     html = f"""<!DOCTYPE html><html><body><article>
     <h1>Title</h1>
@@ -66,7 +72,7 @@ def test_inline_code_not_flagged_as_fused(pipeline):
     assert all(i["type"] != "fused text" for i in r.issues)
 
 
-def test_multiple_links_zero_false_positives(pipeline):
+def test_multiple_links_zero_false_positives(pipeline: Callable[..., SimpleNamespace]) -> None:
     links = " ".join(
         f'<a href="https://example.com/very/long/path/to/resource/number/{i}">link{i}</a>' for i in range(10)
     )
@@ -78,7 +84,7 @@ def test_multiple_links_zero_false_positives(pipeline):
     assert all(i["type"] != "fused text" for i in r.issues)
 
 
-def test_issues_have_anchors(pipeline):
+def test_issues_have_anchors(pipeline: Callable[..., SimpleNamespace]) -> None:
     fused = "x" * 90
     html = f"""<!DOCTYPE html><html><body><article>
     <h1>Title</h1>

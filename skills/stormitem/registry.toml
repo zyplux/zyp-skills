@@ -4,12 +4,12 @@
 # Commits scopes that stormitem accepts for that repo. Adding a repo or feature
 # here is a versioned PR — there is no user-config layer in v1.
 #
-# The `totvibe-skills` features must match the directory listing under
+# The `zyp-skills` features must match the directory listing under
 # `skills/`. The sync test in tests/skills/stormitem/test_registry_sync.py
 # enforces this.
 
-[repos.totvibe-skills]
-owner = "realSergiy"
+[repos.zyp-skills]
+owner = "zyplux"
 features = [
     "gen-commit-message",
     "h2md",

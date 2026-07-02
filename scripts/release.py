@@ -20,9 +20,10 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import subprocess
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 import typer
 
@@ -30,8 +31,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = REPO_ROOT / "skills"
 BASE_REF = "origin/main"
 
-SKILL_MD_VERSION_RE = re.compile(r'^(\s*version:\s*).*$', re.MULTILINE)
-PY_VERSION_RE = re.compile(r'^(__version__\s*=\s*).*$', re.MULTILINE)
+SKILL_MD_VERSION_RE = re.compile(r"^(\s*version:\s*).*$", re.MULTILINE)
+PY_VERSION_RE = re.compile(r"^(__version__\s*=\s*).*$", re.MULTILINE)
 SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 SKILL_MD_VERSION_READ_RE = re.compile(r'^\s*version:\s*"?([^"\s]+)"?\s*$', re.MULTILINE)
 
@@ -48,15 +49,34 @@ def _cli() -> None:
 
 
 def read_skill_md_version(skill_dir: Path) -> str | None:
-    text = (skill_dir / "SKILL.md").read_text()
+    text = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
     m = SKILL_MD_VERSION_READ_RE.search(text)
     return m.group(1) if m else None
 
 
+class ToolNotFoundError(RuntimeError):
+    def __init__(self, tool: str) -> None:
+        super().__init__(f"`{tool}` not found on PATH")
+
+
 def _git_show(ref: str, path: str) -> str | None:
+    """The single audited subprocess boundary for release.
+
+    `git` is resolved to an absolute path via PATH and args are passed as a
+    list, so the shell is never invoked and nothing is shell-interpreted.
+    `ref` is program-constructed; `path` may embed a validated CLI argument,
+    and a hostile value can at worst address a nonexistent blob, yielding None.
+    """
+    executable = shutil.which("git")
+    if executable is None:
+        msg = "git"
+        raise ToolNotFoundError(msg)
     proc = subprocess.run(
-        ["git", "show", f"{ref}:{path}"],
-        cwd=REPO_ROOT, text=True, capture_output=True,
+        [executable, "show", f"{ref}:{path}"],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
     )
     return proc.stdout if proc.returncode == 0 else None
 
@@ -72,7 +92,8 @@ def base_skill_md_version(skill: str) -> str | None:
 def bump_semver(current: str, kind: BumpKind) -> str:
     m = SEMVER_RE.match(current)
     if not m:
-        raise ValueError(f"not a semver: {current!r}")
+        msg = f"not a semver: {current!r}"
+        raise ValueError(msg)
     major, minor, patch = (int(g) for g in m.groups())
     if kind == "major":
         return f"{major + 1}.0.0"
@@ -86,16 +107,18 @@ def diff_kind(base: str, current: str) -> DiffKind:
     bm = SEMVER_RE.match(base)
     cm = SEMVER_RE.match(current)
     if not bm or not cm:
-        raise ValueError(f"non-semver: {base!r} or {current!r}")
-    bM, bn, bp = (int(g) for g in bm.groups())
-    cM, cn, cp = (int(g) for g in cm.groups())
-    if (cM, cn, cp) < (bM, bn, bp):
-        raise ValueError(f"current {current} is below base {base}")
-    if cM != bM:
+        msg = f"non-semver: {base!r} or {current!r}"
+        raise ValueError(msg)
+    base_major, base_minor, base_patch = (int(g) for g in bm.groups())
+    current_major, current_minor, current_patch = (int(g) for g in cm.groups())
+    if (current_major, current_minor, current_patch) < (base_major, base_minor, base_patch):
+        msg = f"current {current} is below base {base}"
+        raise ValueError(msg)
+    if current_major != base_major:
         return "major"
-    if cn != bn:
+    if current_minor != base_minor:
         return "minor"
-    if cp != bp:
+    if current_patch != base_patch:
         return "patch"
     return "none"
 
@@ -109,7 +132,7 @@ def decide_bump(base: str, current: str, requested: BumpKind) -> str | None:
 
 
 def _set_version_in(path: Path, new: str) -> None:
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     if path.name == "SKILL.md":
         new_text = SKILL_MD_VERSION_RE.sub(rf'\1"{new}"', text, count=1)
     elif path.name == "package.json":
@@ -119,10 +142,12 @@ def _set_version_in(path: Path, new: str) -> None:
     elif path.suffix == ".py":
         new_text = PY_VERSION_RE.sub(rf'\1"{new}"', text, count=1)
     else:
-        raise ValueError(f"don't know how to update version in {path}")
+        msg = f"don't know how to update version in {path}"
+        raise ValueError(msg)
     if new_text == text:
-        raise RuntimeError(f"no version field updated in {path}")
-    path.write_text(new_text)
+        msg = f"no version field updated in {path}"
+        raise RuntimeError(msg)
+    path.write_text(new_text, encoding="utf-8")
 
 
 def _apply_version_bump(skill: str, new_version: str) -> None:
@@ -141,24 +166,31 @@ def _apply_version_bump(skill: str, new_version: str) -> None:
 @app.command()
 def bump(
     skill: str = typer.Argument(..., help="Skill to bump."),
-    patch_: bool = typer.Option(False, "--patch", "-p"),
-    minor: bool = typer.Option(False, "--minor"),
-    major: bool = typer.Option(False, "--major"),
+    *,
+    patch_: Annotated[bool, typer.Option("--patch", "-p")] = False,
+    minor: Annotated[bool, typer.Option("--minor")] = False,
+    major: Annotated[bool, typer.Option("--major")] = False,
 ) -> None:
     """Bump <skill>'s version (default minor). Idempotent + higher-wins."""
     if sum([patch_, minor, major]) > 1:
-        raise typer.BadParameter("pass at most one of --patch / --minor / --major")
+        msg = "pass at most one of --patch / --minor / --major"
+        raise typer.BadParameter(msg)
     requested: BumpKind = "major" if major else "patch" if patch_ else "minor"
+    if skill == ".." or Path(skill).name != skill:
+        msg = f"invalid skill name: {skill!r}"
+        raise typer.BadParameter(msg)
     skill_dir = SKILLS_DIR / skill
     if not (skill_dir / "SKILL.md").exists():
-        raise typer.BadParameter(f"unknown skill: {skill}")
+        msg = f"unknown skill: {skill}"
+        raise typer.BadParameter(msg)
     base = base_skill_md_version(skill)
     if base is None:
         typer.echo(f"{skill}: not on {BASE_REF} (new skill?). Set the initial version manually.")
         return
     current = read_skill_md_version(skill_dir)
     if current is None:
-        raise RuntimeError(f"{skill}: SKILL.md has no version")
+        msg = f"{skill}: SKILL.md has no version"
+        raise RuntimeError(msg)
     new = decide_bump(base, current, requested)
     if new is None:
         kind = diff_kind(base, current)

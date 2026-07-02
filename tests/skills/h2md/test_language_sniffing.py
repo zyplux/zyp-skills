@@ -1,63 +1,89 @@
-"""Contract tests for language sniffing.
-
-These test a pure function with a stable interface. The function name
-(_sniff_language) is treated as a stable contract — renaming it is
-expected to require updating these tests. The tradeoff is worthwhile
-because testing 10+ edge cases through the full pipeline would be
-expensive and indirect.
-"""
-
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
-def test_toml(h2md):
-    assert h2md._sniff_language("[package]\nname = 'foo'") == "toml"
-
-
-def test_bash_curl(h2md):
-    assert h2md._sniff_language("curl -fsSL https://example.com") == "bash"
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from types import SimpleNamespace
 
 
-def test_bash_npm(h2md):
-    assert h2md._sniff_language("npm install express") == "bash"
+def _code_block_html(code: str) -> str:
+    return f"""<!DOCTYPE html><html><body><article>
+    <h1>Code Example</h1>
+    <p>Example:</p>
+    <pre><code>{code}</code></pre>
+    </article></body></html>"""
 
 
-def test_json(h2md):
-    assert h2md._sniff_language('{"key": "value"}') == "json"
+def test_toml(pipeline: Callable[..., SimpleNamespace]) -> None:
+    r = pipeline(_code_block_html("[package]\nname = 'foo'"))
+    assert "```toml" in r.md
 
 
-def test_python(h2md):
-    assert h2md._sniff_language("from fastapi import FastAPI\n\napp = FastAPI()") == "python"
+def test_bash_curl(pipeline: Callable[..., SimpleNamespace]) -> None:
+    r = pipeline(_code_block_html("curl -fsSL https://example.com"))
+    assert "```bash" in r.md
 
 
-def test_javascript(h2md):
-    assert h2md._sniff_language("const app = () => {}") == "javascript"
+def test_bash_npm(pipeline: Callable[..., SimpleNamespace]) -> None:
+    r = pipeline(_code_block_html("npm install express"))
+    assert "```bash" in r.md
 
 
-def test_tsx(h2md):
-    assert h2md._sniff_language("<Button onClick={handler}>Click</Button>") == "tsx"
+def test_json(pipeline: Callable[..., SimpleNamespace]) -> None:
+    r = pipeline(_code_block_html('{"key": "value"}'))
+    assert "```json" in r.md
 
 
-def test_sql(h2md):
-    assert h2md._sniff_language("SELECT * FROM users WHERE id = 1") == "sql"
-    assert h2md._sniff_language("CREATE TABLE users (id INT)") == "sql"
+def test_python(pipeline: Callable[..., SimpleNamespace]) -> None:
+    r = pipeline(_code_block_html("from fastapi import FastAPI\n\napp = FastAPI()"))
+    assert "```python" in r.md
 
 
-def test_typescript(h2md):
-    assert h2md._sniff_language("interface User {\n  name: string;\n}") == "typescript"
-    assert h2md._sniff_language("type Foo = string | number") == "typescript"
+def test_javascript(pipeline: Callable[..., SimpleNamespace]) -> None:
+    r = pipeline(_code_block_html("const app = () => {}"))
+    assert "```javascript" in r.md
 
 
-def test_es6_import_is_javascript_not_python(h2md):
-    assert h2md._sniff_language("import express from 'express'\nconst app = express()") == "javascript"
-    assert h2md._sniff_language('import { useState } from "react"') == "javascript"
+def test_tsx(pipeline: Callable[..., SimpleNamespace]) -> None:
+    r = pipeline(_code_block_html("&lt;Button onClick={handler}&gt;Click&lt;/Button&gt;"))
+    assert "```tsx" in r.md
 
 
-def test_es6_export_is_javascript(h2md):
-    assert h2md._sniff_language("export default function handler(req, res) {}") == "javascript"
-    assert h2md._sniff_language("export const config = { runtime: 'edge' }") == "javascript"
+def test_sql(pipeline: Callable[..., SimpleNamespace]) -> None:
+    r = pipeline(_code_block_html("SELECT * FROM users WHERE id = 1"))
+    assert "```sql" in r.md
+    r = pipeline(_code_block_html("CREATE TABLE users (id INT)"))
+    assert "```sql" in r.md
 
 
-def test_default_text(h2md):
-    assert h2md._sniff_language("some plain text output") == "text"
-    assert h2md._sniff_language("") == "text"
+def test_typescript(pipeline: Callable[..., SimpleNamespace]) -> None:
+    r = pipeline(_code_block_html("interface User {\n  name: string;\n}"))
+    assert "```typescript" in r.md
+    r = pipeline(_code_block_html("type Foo = string | number"))
+    assert "```typescript" in r.md
+
+
+def test_es6_import_is_javascript_not_python(pipeline: Callable[..., SimpleNamespace]) -> None:
+    r = pipeline(_code_block_html("import express from 'express'\nconst app = express()"))
+    assert "```javascript" in r.md
+    r = pipeline(_code_block_html('import { useState } from "react"'))
+    assert "```javascript" in r.md
+
+
+def test_es6_export_is_javascript(pipeline: Callable[..., SimpleNamespace]) -> None:
+    r = pipeline(_code_block_html("export default function handler(req, res) {}"))
+    assert "```javascript" in r.md
+    r = pipeline(_code_block_html("export const config = { runtime: 'edge' }"))
+    assert "```javascript" in r.md
+
+
+def test_default_text(pipeline: Callable[..., SimpleNamespace]) -> None:
+    r = pipeline(_code_block_html("some plain text output"))
+    assert "```text" in r.md
+
+
+def test_empty_code_block_does_not_crash_pipeline(pipeline: Callable[..., SimpleNamespace]) -> None:
+    r = pipeline(_code_block_html(""))
+    assert "```" not in r.md
+    assert "Example:" in r.md

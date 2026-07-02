@@ -1,0 +1,22 @@
+line-length = 120
+target-version = "py314"
+preview = true
+
+[lint]
+select = ["ALL"]
+ignore = [
+    "COM812", # the formatter owns trailing commas; the rule fights it
+    "ISC001", # the formatter owns implicit string concatenation; the rule fights it
+    "D",      # docstrings are optional here — code is written to be self-documenting
+    "DOC",    # docstring-section rules only matter once docstrings are mandated (they aren't)
+    "CPY001", # the project carries no copyright-header convention
+    "S404",   # production code reaches `subprocess` only through proc.run, the single audited boundary (tests invoke it directly)
+    "S603",   # proc.run builds argv itself with an absolute argv[0] and no shell — no injection surface
+    "S607",   # tooling (git, gh, rumdl, etc.) is intentionally invoked by name off PATH
+]
+
+[lint.per-file-ignores]
+"**/tests/**" = [
+    "INP001", # the tests tree is deliberately not an importable package (pytest rootdir layout)
+    "S101",   # `assert` is pytest's assertion API (production asserts stay flagged)
+]

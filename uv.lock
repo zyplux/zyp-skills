@@ -366,6 +366,30 @@ wheels = [
 ]
 
 [[package]]
+name = "rust-just"
+version = "1.55.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/68/2c/dd7fc1fc831b81574097b5713c06d01d944d9cc9545e5edf851eb92db3c3/rust_just-1.55.1.tar.gz", hash = "sha256:0feb665219eeba4e666e655252c7c2c816a9ea2d3468fb9472e31ae7b0a8ee78", size = 1980420, upload-time = "2026-07-01T04:22:56.483Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d0/66/f43cac14c49cdec6cbf4bdd76a38bf53bf92093c774955c537444ed5df4c/rust_just-1.55.1-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:f6afc9aa826d1be85b6f1491eb1ac8df9bd88ed4b8f4a2d136e0e853310db7ce", size = 2249038, upload-time = "2026-07-01T04:22:32.28Z" },
+    { url = "https://files.pythonhosted.org/packages/5e/43/a8399c11a178ef17ea71b443198373fef79ef757132e42c9452f3b80eeb5/rust_just-1.55.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:c583b2f9857503dfd4a10b18d638eb543a615a5af88c2f8d463b797f63a36193", size = 2091471, upload-time = "2026-07-01T04:22:34.385Z" },
+    { url = "https://files.pythonhosted.org/packages/6c/10/55481a2772c2cb0a25315af8d62aac652b48c5f59338aba4e4ee808173bb/rust_just-1.55.1-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7633c1763733041809308d4aef2c811853a9df76135d076b84a22a76437efbf6", size = 2198889, upload-time = "2026-07-01T04:22:35.785Z" },
+    { url = "https://files.pythonhosted.org/packages/aa/04/1c07eaf30442a610fd522a5f490e99d9ae880733198189eee92189ce4bf1/rust_just-1.55.1-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:cb20a6f90809bdafcadc3bf3891b130c2f3a401d51718d026343ba45208b9e1c", size = 2160968, upload-time = "2026-07-01T04:22:37.314Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/21/935cc1466f929bb627b1d262f7af9b2a1bba883f6713ef0bde5db5592e92/rust_just-1.55.1-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:2b92aac702652f59c1833a1a22983bbbd1001d4dd719738d71f85cad0b6fe65d", size = 2362899, upload-time = "2026-07-01T04:22:38.809Z" },
+    { url = "https://files.pythonhosted.org/packages/98/00/88d3536e608b5ed3121b14b7a198a2e21f80aee25a101d1e237383ad6fc6/rust_just-1.55.1-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:168929391b9066ff31e9b4392c1477389020d261fde87f591cdd7b978f23eaca", size = 2464013, upload-time = "2026-07-01T04:22:40.356Z" },
+    { url = "https://files.pythonhosted.org/packages/0f/34/644dc589ff3ebd14eb4c6140777913fd1d338f263e3fe1178386014b1bd8/rust_just-1.55.1-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:0856de1bebbf9f55dabf29aa02a7cb2165295a1503405c21f392672216ac3fa5", size = 2438565, upload-time = "2026-07-01T04:22:41.877Z" },
+    { url = "https://files.pythonhosted.org/packages/6f/1a/23adf9857a86deb51c7368a70a25c674e04c0cc34ffd8b20102ba3b3eff0/rust_just-1.55.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9782c384a65ce0f4c0a5dd2f21ff5f8b31de53ba831b7da0b610b72108ecbfd3", size = 2360005, upload-time = "2026-07-01T04:22:43.57Z" },
+    { url = "https://files.pythonhosted.org/packages/af/30/5513b23940195d78401549df08662297972736ba05046b2d9b64ceb9dbca/rust_just-1.55.1-py3-none-manylinux_2_31_riscv64.whl", hash = "sha256:362ee380c2f8acc7966e8c87265e510f2aa5442adced2d2314cfcf8d5b9be123", size = 2209499, upload-time = "2026-07-01T04:22:44.796Z" },
+    { url = "https://files.pythonhosted.org/packages/8a/b3/ee1537dbf4ff318da2fd0e0cf6deb5c3adddef8e668f206ae5280448463a/rust_just-1.55.1-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:166ed4f89de2ecc36bac0f2c9278c6e65a58e65de28e84603d9e9b3dac7e9b1f", size = 2206581, upload-time = "2026-07-01T04:22:46.006Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/53/ccd999419f8db65e217c1c4b18a89d4eedd28078954878fb784428909093/rust_just-1.55.1-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:e1cbdfbb867c39adedec72e8019402a3f3b407f2b396d41b7a78444ea9349583", size = 2180225, upload-time = "2026-07-01T04:22:47.974Z" },
+    { url = "https://files.pythonhosted.org/packages/e4/ca/72922a2aafcb029c600010e0c89137dedc9acab95a9bbadc6df7ff976c3e/rust_just-1.55.1-py3-none-musllinux_1_2_i686.whl", hash = "sha256:cf7d57dace640787e07b476ff885ffde1761551b905ac7d18388aa9403996331", size = 2332523, upload-time = "2026-07-01T04:22:49.356Z" },
+    { url = "https://files.pythonhosted.org/packages/b1/7c/ba4c2c4dbbb28272b0b9426e1da7c1a413275c0478ec0c611bfa37441a32/rust_just-1.55.1-py3-none-musllinux_1_2_riscv64.whl", hash = "sha256:10598183fa0aaa1a34c24159766263b4534493278ab42644bf25ba0d1512e74a", size = 2384144, upload-time = "2026-07-01T04:22:50.936Z" },
+    { url = "https://files.pythonhosted.org/packages/1e/d9/2009a27caca7d37ea241d89cc96ac8def88d7bdfd8857f4637a57645a2b9/rust_just-1.55.1-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:ad1ace811bf8bead7eea9680d3e4420f6af9ccaa771ddd81bbbe5f5246ff4328", size = 2440038, upload-time = "2026-07-01T04:22:52.236Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/9b/59ef2bfa9236ac0782d6a39c280d4e19301816a14741e09e2f8268d21715/rust_just-1.55.1-py3-none-win32.whl", hash = "sha256:752fb54379bb9757bca7d7503e636eb464d0b571f30fbe640629e0407b2a32eb", size = 2102556, upload-time = "2026-07-01T04:22:53.573Z" },
+    { url = "https://files.pythonhosted.org/packages/78/69/e0d080ca72da834936b6b24be3ea2d7268c3e1d18f214eac0a6ea4a92d0e/rust_just-1.55.1-py3-none-win_amd64.whl", hash = "sha256:b2d75159468843dac238be5b0b6372819135f2c2894dcbfe01e0eaf74df67329", size = 2326755, upload-time = "2026-07-01T04:22:55.122Z" },
+]
+
+[[package]]
 name = "shellingham"
 version = "1.5.4"
 source = { registry = "https://pypi.org/simple" }
@@ -427,7 +451,49 @@ wheels = [
 ]
 
 [[package]]
-name = "totvibe-skills"
+name = "typer"
+version = "0.26.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "annotated-doc" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "rich" },
+    { name = "shellingham" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7c/f7/68adc395201b20b872d68e975386832e8005ffeacedd43a1d837a32815be/typer-0.26.8.tar.gz", hash = "sha256:c244a6bd558886fe3f8780efb6bdd28bb9aff005a94eedebaa5cb32926fe2f7e", size = 202097, upload-time = "2026-06-26T09:22:45.705Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/80/87/b9fd69c92c6102a066e1b86a35243f53e70bd4c709f2a26d9f4fee4f4dc0/typer-0.26.8-py3-none-any.whl", hash = "sha256:3512ca79ac5c11113414b36e80281b872884477722440691c89d1112e321a49c", size = 122564, upload-time = "2026-06-26T09:22:44.72Z" },
+]
+
+[[package]]
+name = "types-pyyaml"
+version = "6.0.12.20260518"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b8/83/4a1afc3fbfcf5b8d46fc390cd95ed6b0dc9010a265f4e9f46314efffa37a/types_pyyaml-6.0.12.20260518.tar.gz", hash = "sha256:d917f83fb38462550338c1297faedd860b3ec83912b96b1e3d73255f7473e466", size = 17850, upload-time = "2026-05-18T06:01:58.675Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/06/a2/c01db32be2ae7d6a1689972f3c492b149ee4e164b12fdfd9f64b50888215/types_pyyaml-6.0.12.20260518-py3-none-any.whl", hash = "sha256:d2150f75a231c9fe9c7463bd29487d93e60bac90400287351384bc2284eba7cd", size = 20312, upload-time = "2026-05-18T06:01:57.368Z" },
+]
+
+[[package]]
+name = "typing-extensions"
+version = "4.15.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/72/94/1a15dd82efb362ac84269196e94cf00f187f7ed21c242792a923cdb1c61f/typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466", size = 109391, upload-time = "2025-08-25T13:49:26.313Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/18/67/36e9267722cc04a6b9f15c7f3441c2363321a3ea07da7ae0c0707beb2a9c/typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548", size = 44614, upload-time = "2025-08-25T13:49:24.86Z" },
+]
+
+[[package]]
+name = "vulture"
+version = "2.16"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/66/3e/4d08c5903b2c0c70cad583c170cc4a663fc6a61e2ad00b711fcda61358cd/vulture-2.16.tar.gz", hash = "sha256:f8d9f6e2af03011664a3c6c240c9765b3f392917d3135fddca6d6a68d359f717", size = 52680, upload-time = "2026-03-25T14:41:27.141Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f5/be/f935130312330614811dae2ea9df3f395f6d63889eb6c2e68c14507152ee/vulture-2.16-py3-none-any.whl", hash = "sha256:6e0f1c312cef1c87856957e5c2ca9608834a7c794c2180477f30bf0e4cc58eee", size = 26993, upload-time = "2026-03-25T14:41:26.21Z" },
+]
+
+[[package]]
+name = "zyp-skills"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
@@ -440,6 +506,7 @@ lint = [
     { name = "ruff" },
     { name = "rumdl" },
     { name = "vulture" },
+    { name = "zyplux-cerberus" },
 ]
 test = [
     { name = "beautifulsoup4" },
@@ -479,6 +546,7 @@ lint = [
     { name = "ruff", specifier = ">=0.11" },
     { name = "rumdl", specifier = ">=0.1.84" },
     { name = "vulture", specifier = ">=2.14" },
+    { name = "zyplux-cerberus", specifier = ">=0.5.1" },
 ]
 test = [
     { name = "beautifulsoup4", specifier = ">=4.13" },
@@ -508,43 +576,15 @@ typecheck = [
 ]
 
 [[package]]
-name = "typer"
-version = "0.25.1"
+name = "zyplux-cerberus"
+version = "0.5.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "annotated-doc" },
-    { name = "click" },
-    { name = "rich" },
-    { name = "shellingham" },
+    { name = "pyyaml" },
+    { name = "rust-just" },
+    { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e4/51/9aed62104cea109b820bbd6c14245af756112017d309da813ef107d42e7e/typer-0.25.1.tar.gz", hash = "sha256:9616eb8853a09ffeabab1698952f33c6f29ffdbceb4eaeecf571880e8d7664cc", size = 122276, upload-time = "2026-04-30T19:32:16.964Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/40/d9/da1a5c932a8f390540a64a213d75abe0048b820f60f3f890fdff67ebb896/zyplux_cerberus-0.5.1.tar.gz", hash = "sha256:6f106fadad326f94de0ce9fbea2c4b16afbc036c9728612594b3d17894dfcc9c", size = 18134, upload-time = "2026-06-30T16:02:21.855Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/f9/2b3ff4e56e5fa7debfaf9eb135d0da96f3e9a1d5b27222223c7296336e5f/typer-0.25.1-py3-none-any.whl", hash = "sha256:75caa44ed46a03fb2dab8808753ffacdbfea88495e74c85a28c5eefcf5f39c89", size = 58409, upload-time = "2026-04-30T19:32:18.271Z" },
-]
-
-[[package]]
-name = "types-pyyaml"
-version = "6.0.12.20260518"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b8/83/4a1afc3fbfcf5b8d46fc390cd95ed6b0dc9010a265f4e9f46314efffa37a/types_pyyaml-6.0.12.20260518.tar.gz", hash = "sha256:d917f83fb38462550338c1297faedd860b3ec83912b96b1e3d73255f7473e466", size = 17850, upload-time = "2026-05-18T06:01:58.675Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/06/a2/c01db32be2ae7d6a1689972f3c492b149ee4e164b12fdfd9f64b50888215/types_pyyaml-6.0.12.20260518-py3-none-any.whl", hash = "sha256:d2150f75a231c9fe9c7463bd29487d93e60bac90400287351384bc2284eba7cd", size = 20312, upload-time = "2026-05-18T06:01:57.368Z" },
-]
-
-[[package]]
-name = "typing-extensions"
-version = "4.15.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/72/94/1a15dd82efb362ac84269196e94cf00f187f7ed21c242792a923cdb1c61f/typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466", size = 109391, upload-time = "2025-08-25T13:49:26.313Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/18/67/36e9267722cc04a6b9f15c7f3441c2363321a3ea07da7ae0c0707beb2a9c/typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548", size = 44614, upload-time = "2025-08-25T13:49:24.86Z" },
-]
-
-[[package]]
-name = "vulture"
-version = "2.16"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/66/3e/4d08c5903b2c0c70cad583c170cc4a663fc6a61e2ad00b711fcda61358cd/vulture-2.16.tar.gz", hash = "sha256:f8d9f6e2af03011664a3c6c240c9765b3f392917d3135fddca6d6a68d359f717", size = 52680, upload-time = "2026-03-25T14:41:27.141Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f5/be/f935130312330614811dae2ea9df3f395f6d63889eb6c2e68c14507152ee/vulture-2.16-py3-none-any.whl", hash = "sha256:6e0f1c312cef1c87856957e5c2ca9608834a7c794c2180477f30bf0e4cc58eee", size = 26993, upload-time = "2026-03-25T14:41:26.21Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/d1/028c3a8801d65075b7a1b882bd5dd560e428af6b613e1335f30ab16042d5/zyplux_cerberus-0.5.1-py3-none-any.whl", hash = "sha256:364f68bc4b8ec2ba4eac0962e2c67754325f8d3a6d5913d7782cf56a1bc98f2b", size = 30675, upload-time = "2026-06-30T16:02:20.537Z" },
 ]

@@ -3,8 +3,8 @@ name: mermaid
 description: Generate Mermaid diagrams for markdown — flowcharts, sequence diagrams, state machines, ER diagrams, architectures, Gantt, Sankey, mindmaps, and 20+ other types. Use whenever the user asks to draw, sketch, visualize, diagram, chart, or graph anything that ends up in markdown (README, design doc, code comment, PR/issue, wiki) — even when 'mermaid' is not mentioned. Trigger on 'draw/show the flow/architecture/state/sequence/relationship', 'add a flowchart/sequence diagram', 'diagram how X works', 'graph the schema', or any time the user shows an existing mermaid block to extend or fix. Picking the right diagram type for the question matters more than syntax fluency — the skill carries a curated selection guide and per-type syntax references. Do NOT use for production charts from real data (matplotlib, plotly, d3), formal architecture-of-record modelling, or when the user wants a static image rather than markdown — Mermaid is for explanation that lives next to prose.
 metadata:
   kind: prompt
-  version: "0.2.0"
-  mermaid-version: "11.14.0"
+  version: "0.16.0"
+  mermaid-version: "11.16.0"
 ---
 
 # mermaid
@@ -13,7 +13,7 @@ Diagrams that live next to prose in markdown. Mermaid is a text-based diagram la
 
 The single most important decision when making a Mermaid diagram is **which diagram type to use**. Picking wrong produces a diagram that is syntactically perfect but answers a question no one asked. Picking right means even a clumsy diagram communicates.
 
-This skill carries a curated **selection guide** (28 diagram types — when each is right, when to avoid it, how to tiebreak) and **per-diagram syntax references** sourced from the official Mermaid docs. Use them — Mermaid syntax shifts faster than memory, and the cost of one extra file read is far less than the cost of a hallucinated arrow type.
+This skill carries a curated **selection guide** (31 diagram types — when each is right, when to avoid it, how to tiebreak) and **per-diagram syntax references** sourced from the official Mermaid docs. Use them — Mermaid syntax shifts faster than memory, and the cost of one extra file read is far less than the cost of a hallucinated arrow type.
 
 ---
 
@@ -72,6 +72,7 @@ Each row also lists the **Avoid-when** signal — the failure mode where a diffe
 |---|---|---|
 | A process with branches/decisions | **Flowchart** | strictly linear (a list is shorter); actors/systems matter more than steps — use Sequence |
 | Who calls whom, and in what order | **Sequence diagram** | only one actor (Flowchart is shorter); the conversation is OOP-call-shaped (nested invocations with returns) — use ZenUML |
+| A process across teams/systems, with ownership per step | **Swimlanes** *(new, syntax may evolve)* | ownership doesn't matter — use Flowchart; call ordering between two actors matters more than lanes — use Sequence |
 | OOP-call-shaped conversation (nested invocations, returns, try/catch) | **ZenUML** *(experimental)* | async messages with no clear caller/callee, or activations/notes/fragments matter — use Sequence |
 | How information flows over time across UI / commands / events / read models | **Event modeling** *(experimental)* | the system isn't actually event-driven, or you only need a request/response trace — use Sequence |
 | User-facing steps with sentiment | **User journey** | audience is engineers debugging — they want a Flowchart or Sequence, not feelings |
@@ -98,6 +99,8 @@ Each row also lists the **Avoid-when** signal — the failure mode where a diffe
 | Strategic position (visibility × evolution) | **Wardley map** *(beta)* | your axes aren't visibility/evolution — use Quadrant. Note: OWM coordinate format is `[visibility, evolution]`, not `(x, y)` |
 | Bit-level wire format | **Packet** | you're not describing a bit-precise structure — a table is shorter and easier to maintain |
 | Work-in-progress task board | **Kanban** | audience needs durations/dependencies — use Gantt; a screenshot of the actual board may be more honest |
+| Grammar/syntax rules of a language | **Railroad diagram** *(beta)* | the grammar is trivial (a sentence or table communicates it faster) |
+| Which decision-making approach fits a problem's complexity | **Cynefin** *(new)* | you need a general 2x2 — use Quadrant; you're mapping a process, not classifying a problem |
 
 ### 3. Tiebreak when two fit
 
@@ -107,6 +110,9 @@ When two diagrams seem to fit, this table picks the winner.
 |---|---|---|
 | Flowchart vs Sequence | one actor with decisions/branches | multiple actors and message ordering is the point |
 | Sequence vs ZenUML | participants exchange messages; lanes/notes/activations matter | the conversation is OOP-call-shaped (nested calls, returns, try/catch) |
+| Swimlanes vs Sequence | ownership/handoff between teams or systems is the point | call ordering between two actors is the point |
+| Swimlanes vs Flowchart | not only "what happens next?" matters but also "who owns this step?" | steps and branching matter more than who owns them |
+| Quadrant vs Cynefin | axes are author-named, general-purpose | classifying a problem's complexity domain specifically |
 | Architecture vs Block | you want auto-layout with cloud icons | you want hand-placed layout |
 | Architecture/Block vs C4 | ad-hoc, no abstraction levels needed | you want System / Container / Component / Deployment discipline |
 | Architecture vs Flowchart | the boxes are services with cloud icons | the boxes are general nodes with arrows of meaning |
@@ -125,7 +131,7 @@ When two diagrams seem to fit, this table picks the winner.
 
 Mermaid syntax has many quirks: escaping rules, edge ordering, node-shape keywords that change between versions, and several diagram types still flagged beta or experimental whose syntax shifts. Even when you think you know the syntax, **read the reference for the chosen type before writing** — it is sourced directly from the Mermaid project's docs and is the authoritative source of truth.
 
-The references in this skill target **Mermaid 11.14.0** (pinned in `metadata.mermaid-version` in the frontmatter — bump both on upgrade). If the renderer is on a different version, beta/experimental syntax may have shifted; verify against the reference and the live renderer.
+The references in this skill target **Mermaid 11.16.0** (pinned in `metadata.mermaid-version` in the frontmatter — bump both on upgrade). If the renderer is on a different version, beta/experimental syntax may have shifted; verify against the reference and the live renderer.
 
 | Type | Reference file |
 |---|---|
@@ -157,6 +163,9 @@ The references in this skill target **Mermaid 11.14.0** (pinned in `metadata.mer
 | Wardley map | `references/syntax/wardley.md` |
 | Packet | `references/syntax/packet.md` |
 | Kanban | `references/syntax/kanban.md` |
+| Swimlanes | `references/syntax/swimlanes.md` |
+| Railroad diagram | `references/syntax/railroad.md` |
+| Cynefin | `references/syntax/cynefin.md` |
 | Cross-type examples | `references/syntax/examples.md` |
 
 ### 5. Write the diagram
@@ -241,7 +250,7 @@ Distilled from the selection guide. Apply these when the table feels ambiguous.
 3. **Time vs ordering vs neither.** Calendar time → Gantt/timeline. Logical ordering (step 1, step 2) → flowchart/sequence. Event-time across swimlanes → event modeling. Neither → structural diagrams (class, ER, C4, block).
 4. **If the diagram needs a legend longer than three lines, it's the wrong diagram** — split it, or pick a different type.
 5. **Mermaid is for explanation, not analysis.** When data quality and precision matter (real charts, real schemas, real architecture-of-record), a dedicated tool will serve better. Mermaid wins when the diagram lives next to prose in markdown.
-6. **Beta means beta.** Several types are still in beta (`architecture-beta`, `treemap-beta`, `treeView-beta`, `ishikawa-beta`, `venn-beta`, `wardley-beta`, `radar-beta`) and some are experimental (C4, ZenUML, event modeling). Their syntax may shift between Mermaid versions. Pin a known version when it matters and re-test on upgrade.
+6. **Beta means beta.** Several types are still in beta (`architecture-beta`, `treemap-beta`, `treeView-beta`, `ishikawa-beta`, `venn-beta`, `wardley-beta`, `radar-beta`, `railroad-*-beta`), Swimlanes is brand-new with syntax that may still evolve, and some are experimental (C4, ZenUML, event modeling). Their syntax may shift between Mermaid versions. Pin a known version when it matters and re-test on upgrade.
 
 ---
 

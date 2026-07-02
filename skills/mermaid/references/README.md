@@ -14,9 +14,9 @@ The current Mermaid version this skill targets is in `../SKILL.md` frontmatter u
 
 ## How to refresh on a Mermaid upgrade
 
-1. **Download** the latest syntax docs from upstream — e.g. shallow-clone the repo and copy `docs/syntax/*.md` into `syntax/`, or fetch each file directly from the GitHub raw URL. Diff against the current files; note any new diagram types, renamed keywords, deprecated syntax, or beta-to-stable promotions.
+1. **Download** the latest stable syntax docs from upstream — e.g. shallow-clone the repo and copy `docs/syntax/*.md` into `syntax/`, or fetch each file directly from the GitHub raw URL. Diff against the current files; note all changes.
 
-2. **Review `../SKILL.md`** — walk the three tables (*Pick a type*, *Tiebreak when two fit*, *Read the syntax reference*) and the *Heuristics* and *Common pitfalls* sections. Update for new diagram types added upstream, removed types, beta/experimental flags that have changed, or syntax shifts that invalidate existing guidance. Update the starter snippets in *Write the diagram* if any minimal template no longer parses on the new version.
+2. **Review `../SKILL.md`** — and update it for all the changes you have spotted.
 
 3. **Bump both versions** in `../SKILL.md` frontmatter:
    - `metadata.mermaid-version` — to the new Mermaid release (e.g. `"11.15.0"`).

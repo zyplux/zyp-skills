@@ -96,7 +96,7 @@ radar-beta
 
 `title`: The title is an optional field that allows to render a title at the top of the radar diagram.
 
-```
+```text
 radar-beta
   title Title of the Radar Diagram
   ...
@@ -110,7 +110,7 @@ Each axis is represented by an ID and an optional label.
 
 Multiple axes can be defined in a single line.
 
-```
+```text
 radar-beta
   axis id1["Label1"]
   axis id2["Label2"], id3["Label3"]
@@ -127,7 +127,7 @@ Values can be defined by a list of numbers or a list of key-value pairs. If key-
 
 Multiple curves can be defined in a single line.
 
-```
+```text
 radar-beta
   axis axis1, axis2, axis3
   curve id1["Label1"]{1, 2, 3}
@@ -144,7 +144,7 @@ radar-beta
 - `graticule`: The graticule keyword is used to define the type of graticule to be rendered in the radar diagram. The graticule can be `circle` or `polygon`. If not provided, the default graticule is `circle`.
 - `ticks`: The ticks keyword is used to define the number of ticks on the graticule. It is the number of concentric circles or polygons drawn to indicate the scale of the radar diagram. If not provided, the default number of ticks is `5`.
 
-```
+```text
 radar-beta
   ...
   showLegend true

@@ -35,7 +35,7 @@ Two failure modes exist today:
   - `stormitem post <repo> <dir>` — read `issue.md` frontmatter for kind/feature/title; read `plan.md` from the same dir; create issue + branch + PR (or gist fallback); print TOON result; clean up if dir is not under `/tmp/`.
   - `stormitem registry` — list supported repos / features (one-shot inspection; no completion).
 - [DECIDED] **Kinds follow Conventional Commits types** — `feat`, `fix`, `docs`, `refactor`, `perf`, `chore`, `revert`, etc. CLI accepts any string that matches the Conventional Commits spec; doesn't enforce a curated subset.
-- [DECIDED] **Repo identifier is the short name** (e.g. `totvibe-skills`), not `owner/name`. The registry maps short name → owner. Simplifies the CLI surface; assumes no name collisions across the user's personal repos.
+- [DECIDED] **Repo identifier is the short name** (e.g. `zyp-skills`), not `owner/name`. The registry maps short name → owner. Simplifies the CLI surface; assumes no name collisions across the user's personal repos.
 - [DECIDED] **Feature is the Conventional Commits scope.** Per-repo features are pre-registered; CLI accepts only registered features for known repos (errors otherwise so typos don't sneak through to PR titles).
 - [DECIDED] **Slug derivation: `<kind>_<feature>_<title_snake>`.** E.g. kind=`feat`, feature=`peek`, title=`support_julia` → slug `feat_peek_support_julia`. Used for branch name, plan dir name, and tmp dir prefix.
 - [DECIDED] **Branch name: `stormitem/<slug>`.** Fixed convention.
@@ -50,9 +50,9 @@ Two failure modes exist today:
 - [DECIDED] **Default file location: `/tmp/stormitem-<slug>-XXXXXX/`** (random suffix via `tempfile.mkdtemp`). OS handles cleanup; CLI does not delete `/tmp/` paths.
 - [DECIDED] **Cleanup rule: CLI deletes input dir on success unless under `/tmp/`.**
 - [DECIDED] **Stop threshold: plan-storm's default 95%.** The plan-review gate is the human safety net.
-- [DECIDED] **Registry layering: shipped-only (PR adds a repo).** No user-config layer in v1 — stormitem supports a small handful of personal repos, all of which warrant a versioned PR to add. Pre-registers `totvibe-skills` only.
+- [DECIDED] **Registry layering: shipped-only (PR adds a repo).** No user-config layer in v1 — stormitem supports a small handful of personal repos, all of which warrant a versioned PR to add. Pre-registers `zyp-skills` only.
 - [DECIDED] **Branch and plan-path conventions are fixed across all repos** in v1 — predictable for the future auto-implementing agent. Per-repo overrides deferred to v2 if real-world friction shows up.
-- [DECIDED] Sync test enforces that `registry.toml`'s `totvibe-skills` features match `os.listdir(skills/)`.
+- [DECIDED] Sync test enforces that `registry.toml`'s `zyp-skills` features match `os.listdir(skills/)`.
 - [DECIDED] **Frontmatter parser: PyYAML.** Added to inline PEP 723 deps as `pyyaml>=6.0`.
 - [DECIDED] **Optimistic posting; fail-loud.** No partial-failure recovery, idempotency tracking, or resume logic in v1. On any error, the CLI prints the error and the last-successful step, leaves the temp dir intact, and exits non-zero. The user resolves repo-side state manually and re-runs `stormitem post`.
 
@@ -144,9 +144,9 @@ Two failure modes exist today:
 
 - `/stormitem [seed]` → SKILL.md clarifies args → calls `stormitem pull` → hands off to plan-storm → review gate 1 → maps plan to issue body → review gate 2 → calls `stormitem post`.
 - `stormitem pull` and `stormitem post` are deterministic; neither knows about plan-storm.
-- Registry: `skills/stormitem/registry.toml` pre-registers `totvibe-skills` with all skill-dir names as features.
+- Registry: `skills/stormitem/registry.toml` pre-registers `zyp-skills` with all skill-dir names as features.
 - Built-in fallback templates at `skills/stormitem/templates/{feat,fix,refactor,_default}.md`.
-- Sync test: registry's `totvibe-skills` features = `os.listdir(skills/)`.
+- Sync test: registry's `zyp-skills` features = `os.listdir(skills/)`.
 - PR+branch flow with gist fallback. End-to-end tested against a sandbox repo before v1 ships.
 
 ## 9. Architecture sketch
@@ -169,7 +169,7 @@ The CLI is the only component that talks to GitHub. SKILL.md only invokes the CL
 
 ## 11. Roadmap
 
-- **v1 / walking skeleton:** SKILL.md orchestration + `pull` + `post` + `registry` + shipped registry with `totvibe-skills` + PR+branch with gist fallback + sync test + end-to-end test against a sandbox repo.
+- **v1 / walking skeleton:** SKILL.md orchestration + `pull` + `post` + `registry` + shipped registry with `zyp-skills` + PR+branch with gist fallback + sync test + end-to-end test against a sandbox repo.
 - **v2:** more personal repos in the registry; per-repo branch/path overrides if needed; richer agent-seed parsing (auto-extract title from seed); richer frontmatter (e.g. milestone, project).
 - **v3+:** issue dedup search; idempotency / resume support for partial-failure recovery (the PR mode has 5–7 API calls); multi-issue batch.
 
@@ -189,7 +189,7 @@ The CLI is the only component that talks to GitHub. SKILL.md only invokes the CL
 - **Chose to push *all* deterministic mechanics into the CLI** — repo identifier resolution, template fetching + matching, frontmatter rendering, slug derivation, branch naming, PR title format, push-access detection, gist fallback, cleanup. SKILL.md knows only the high-level flow. This minimizes the SKILL.md surface that has to be perfectly specified in prose.
 - **Chose YAML frontmatter in `issue.md` (`stormitem:` namespace)** as the metadata-passing convention between `pull` and `post`. One file, machine-readable, editor-friendly, doesn't pollute the visible markdown.
 - **Chose Conventional Commits naming for kind / scope / PR title / branch** — `<kind>(<feature>): <title>` for PR; `stormitem/<kind>_<feature>_<title>` for branch. Aligns with how PRs are titled across this codebase already.
-- **Chose short repo names** in the CLI (e.g. `totvibe-skills`) over `owner/name` because the registry resolves the owner. Cleaner CLI usage. Acceptable because the registry is a small curated set of personal repos.
+- **Chose short repo names** in the CLI (e.g. `zyp-skills`) over `owner/name` because the registry resolves the owner. Cleaner CLI usage. Acceptable because the registry is a small curated set of personal repos.
 - **Chose to drop autocomplete** — the registry is small enough that typing a repo or feature is not a friction point, and removing autocomplete cuts complexity.
 - **Chose registry-shipped only** (no user-config layer) for v1 — registry is small, repos are personal, version-controlled additions are appropriate.
 - **Chose fixed branch / plan-path conventions across all repos** for v1 — predictable for the future auto-implementing agent.

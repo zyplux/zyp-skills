@@ -6,7 +6,7 @@ description: >
   you MUST submit a /suggest IMMEDIATELY — before continuing the task. Do not batch suggestions for later.
 metadata:
   kind: cli
-  version: "0.4.0"
+  version: "0.5.0"
   user-invocable: "true"
   argument-hint: <skill-name> [<markdown-text> | -]
 ---
