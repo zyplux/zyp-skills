@@ -77,7 +77,7 @@ peek unique data/prep/*.parquet --cols round   # unique values from each file
 | Subcommand | Flag | Effect | Default |
 |------------|------|--------|---------|
 | `preview` | `-n N` | Number of preview rows | 2 |
-| `preview` | `-a` | Show all rows (equivalent to `-n 0`) | off |
+| `preview` | `-a` | Show all rows | off |
 | `preview` | `-t` | Append column types | off |
 | `preview` | `--cols a,b` | Select columns for preview | all |
 | `unique` | `--cols a,b` | Column(s) to show distinct values for | required |
