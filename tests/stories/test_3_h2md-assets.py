@@ -56,11 +56,10 @@ def serve_routes() -> Generator[Callable[[dict[str, tuple[str, bytes]]], str]]:
 
 
 @pytest.fixture
-def refused_url() -> str:
-    with socket.socket() as probe:
-        probe.bind(("127.0.0.1", 0))
-        port = probe.getsockname()[1]
-    return f"http://127.0.0.1:{port}/gone.png"
+def refused_url() -> Generator[str]:
+    with socket.socket() as reserved_port:
+        reserved_port.bind(("127.0.0.1", 0))
+        yield f"http://127.0.0.1:{reserved_port.getsockname()[1]}/gone.png"
 
 
 @pytest.fixture
