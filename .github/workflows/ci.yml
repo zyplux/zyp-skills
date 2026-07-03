@@ -15,7 +15,7 @@ jobs:
   ci:
     name: ci
     runs-on: ubuntu-latest
-    container: ghcr.io/zyplux/ci:0.1.0
+    container: ghcr.io/zyplux/ci:0.1.1
     steps:
       - uses: actions/checkout@v6
         with:
