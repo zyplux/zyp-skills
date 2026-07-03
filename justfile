@@ -73,14 +73,8 @@ push-ready: (push "--ready")
 
 # Remove deps and caches from all workspaces.
 clean:
-    rm -rf node_modules packages/*/node_modules tests/*/node_modules
-    rm -rf .venv .pytest_cache .ruff_cache .rumdl_cache .eslintcache .tsbuild
-    find . -type d \( -name __pycache__ -o -name .tsbuild -o -name dist -o -name .ruff_cache -o -name .pytest_cache \) -prune -exec rm -rf {} +
+    find . -type d \( -name node_modules -o -name .venv -o -name __pycache__ -o -name .tsbuild -o -name dist -o -name .ruff_cache -o -name .pytest_cache -o -name .rumdl_cache \) -prune -exec rm -rf {} +
     find . -type f \( -name '*.tsbuildinfo' -o -name '.eslintcache' -o -name '*.py[cod]' \) -delete
-
-# Shallow-clone a reference repo into reference_clones/ (optional branch or tag).
-clone repo ref="":
-    bun run cz clone-reference-repo {{ repo }} {{ ref }}
 
 # CUSTOM
 
