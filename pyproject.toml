@@ -3,42 +3,42 @@ name = "zyp-skills"
 requires-python = ">=3.14"
 version = "0.1.0"
 dependencies = [
-    "typer>=0.15",
-    "skills-ref>=0.1",
+    "typer>=0.26.8",
+    "skills-ref>=0.1.1",
 ]
 
 [dependency-groups]
 test = [
-    "pytest>=8",
-    "duckdb>=1.0",
-    "skills-ref>=0.1",
-    "typer>=0.15",
+    "pytest>=9.1.1",
+    "duckdb>=1.5.4",
+    "skills-ref>=0.1.1",
+    "typer>=0.26.8",
     "toon-format>=0.9.0b1",
-    "httpx>=0.28",
-    "beautifulsoup4>=4.13",
-    "lxml>=5.0",
-    "markdownify>=0.14",
-    "pyyaml>=6.0",
+    "httpx>=0.28.1",
+    "beautifulsoup4>=4.15.0",
+    "lxml>=6.1.1",
+    "markdownify>=1.2.3",
+    "pyyaml>=6.0.3",
 ]
 lint = [
-    "ruff>=0.11",
-    "rumdl>=0.1.84",
-    "vulture>=2.14",
-    "zyplux-cerberus>=0.5.1",
+    "ruff>=0.15.20",
+    "rumdl>=0.2.27",
+    "vulture>=2.16",
+    "zyplux-cerberus==0.5.1",
 ]
 typecheck = [
-    "duckdb>=1.0",
-    "typer>=0.15",
+    "duckdb>=1.5.4",
+    "typer>=0.26.8",
     "toon-format>=0.9.0b1",
-    "pytest>=8",
-    "httpx>=0.28",
-    "beautifulsoup4>=4.13",
-    "lxml>=5.0",
-    "markdownify>=0.14",
-    "pyyaml>=6.0",
-    "types-pyyaml>=6.0",
-    "skills-ref>=0.1",
-    "pyrefly>=1.0.0",
+    "pytest>=9.1.1",
+    "httpx>=0.28.1",
+    "beautifulsoup4>=4.15.0",
+    "lxml>=6.1.1",
+    "markdownify>=1.2.3",
+    "pyyaml>=6.0.3",
+    "types-pyyaml>=6.0.12.20260518",
+    "skills-ref>=0.1.1",
+    "pyrefly>=1.1.1",
 ]
 
 [tool.pytest.ini_options]

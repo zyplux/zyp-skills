@@ -146,8 +146,8 @@ def _insert_span_whitespace(tag: Tag) -> None:
 
 
 def _flatten_tablists(soup: BeautifulSoup) -> None:
-    for tablist in soup.find_all(attrs={"role": "tablist"}):
-        tab_elements = tablist.find_all(attrs={"role": "tab"})
+    for tablist in soup.find_all(role="tablist"):
+        tab_elements = tablist.find_all(role="tab")
         labels = [t.get_text(strip=True) for t in tab_elements]
         panel_ids = [t.get("aria-controls", "") for t in tab_elements]
 
@@ -212,7 +212,7 @@ def _has_any_class(tag: Tag, class_set: set[str]) -> bool:
 
 def _flatten_class_tabs(soup: BeautifulSoup) -> None:
     for container in soup.find_all(lambda t: isinstance(t, Tag) and _has_any_class(t, _TAB_CONTAINER_CLS)):
-        if container.find(attrs={"role": "tablist"}):
+        if container.find(role="tablist"):
             continue
 
         buttons = container.find_all(lambda t: isinstance(t, Tag) and _has_any_class(t, _TAB_BUTTON_CLS))
@@ -242,7 +242,7 @@ def _flatten_class_tabs(soup: BeautifulSoup) -> None:
 
 def _reconstruct_terminal_regions(soup: BeautifulSoup) -> None:
     terminal_keywords = {"terminal", "output", "console", "command", "shell"}
-    for region in soup.find_all(attrs={"role": "region"}):
+    for region in soup.find_all(role="region"):
         aria_label = str(region.get("aria-label") or "").lower()
         if not any(kw in aria_label for kw in terminal_keywords):
             continue
@@ -312,7 +312,7 @@ def _preprocess_dom(soup: BeautifulSoup) -> BeautifulSoup:
         for tag in soup.find_all(tag_name):
             tag.decompose()
 
-    for tag in soup.find_all(attrs={"role": "button"}):
+    for tag in soup.find_all(role="button"):
         if isinstance(tag, Tag):
             tag.decompose()
 
