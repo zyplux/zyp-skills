@@ -19,12 +19,13 @@ test = [
     "lxml>=6.1.1",
     "markdownify>=1.2.3",
     "pyyaml>=6.0.3",
+    "pytest-cov>=7.1.0",
 ]
 lint = [
     "ruff>=0.15.20",
     "rumdl>=0.2.27",
     "vulture>=2.16",
-    "zyplux-cerberus==0.5.1",
+    "zyplux-cerberus==0.7.0",
 ]
 typecheck = [
     "duckdb>=1.5.4",
@@ -42,7 +43,11 @@ typecheck = [
 ]
 
 [tool.pytest.ini_options]
+addopts = "--cov=skills --cov=scripts --cov-report=term-missing"
 testpaths = ["tests"]
+
+[tool.coverage.report]
+fail_under = 90
 
 [tool.vulture]
 paths = ["skills", "scripts"]
