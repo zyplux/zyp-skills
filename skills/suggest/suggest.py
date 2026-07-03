@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.14"
-# dependencies = ["typer>=0.15", "toon-format>=0.9.0b1"]
+# dependencies = ["typer>=0.26.8", "toon-format>=0.9.0b1"]
 # ///
 """Submit structured improvement suggestions for CLI skills — bugs, gaps, inefficiencies."""
 

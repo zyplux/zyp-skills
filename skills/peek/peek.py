@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.14"
-# dependencies = ["duckdb>=1.0", "typer>=0.15", "toon-format>=0.9.0b1"]
+# dependencies = ["duckdb>=1.5.4", "typer>=0.26.8", "toon-format>=0.9.0b1"]
 # ///
 """Quick parquet inspection CLI."""
 

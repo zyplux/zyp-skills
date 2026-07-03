@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.14"
-# dependencies = ["typer>=0.15", "toon-format>=0.9.0b1", "pyyaml>=6.0"]
+# dependencies = ["typer>=0.26.8", "toon-format>=0.9.0b1", "pyyaml>=6.0.3"]
 # ///
 """stormitem — turn a rough thought into a tracked issue + draft PR + plan artifact."""
 
@@ -15,12 +15,16 @@ import shutil
 import subprocess
 import tempfile
 import tomllib
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Annotated, Any, NamedTuple
+from typing import TYPE_CHECKING, Annotated, Any, NamedTuple
 
 import typer
 import yaml
 from toon_format import encode
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 __version__ = "0.2.0"
 
@@ -590,6 +594,16 @@ def _load_issue_draft(work_dir: Path, repo: str) -> tuple[IssueDraft, str, str]:
     return draft, slug, template_used
 
 
+@contextmanager
+def _post_step(step: str) -> Iterator[None]:
+    try:
+        yield
+    except subprocess.CalledProcessError as e:
+        stderr = (e.stderr or "").strip() or str(e)
+        typer.echo(f"stormitem post failed at step {step!r}: {stderr}", err=True)
+        raise typer.Exit(1) from e
+
+
 def _post_pr(
     *,
     target: Repo,
@@ -597,23 +611,21 @@ def _post_pr(
     draft: IssueDraft,
     plan_text: str,
 ) -> dict[str, Any]:
-    last_step = "init"
-    try:
-        last_step = "issue create"
+    with _post_step("issue create"):
         issue_url = _create_issue(target, draft)
         issue_number = _issue_number(issue_url)
 
-        last_step = "default branch lookup"
+    with _post_step("default branch lookup"):
         default_branch = _default_branch(target)
 
-        last_step = "base sha lookup"
+    with _post_step("base sha lookup"):
         base_sha = _ref_sha(target, default_branch)
 
-        branch = _branch(slug)
-        last_step = "branch create"
+    branch = _branch(slug)
+    with _post_step("branch create"):
         _create_branch(target, branch, base_sha)
 
-        last_step = "plan commit"
+    with _post_step("plan commit"):
         _put_file(
             target,
             f"plan/{slug}/plan.md",
@@ -622,26 +634,22 @@ def _post_pr(
             branch,
         )
 
-        last_step = "PR create"
+    with _post_step("PR create"):
         pr_body = f"Closes #{issue_number}\n\n{_summary_line(plan_text)}"
         pr_url = _create_pr(target, default_branch, branch, draft.title, pr_body)
         pr_number = _pr_number(pr_url)
 
-        last_step = "issue linkback"
+    with _post_step("issue linkback"):
         new_body = draft.body.rstrip() + f"\n\nPlan PR: #{pr_number}\n"
         _edit_issue(target, issue_number, new_body)
-    except subprocess.CalledProcessError as e:
-        stderr = (e.stderr or "").strip() or str(e)
-        typer.echo(f"stormitem post failed at step {last_step!r}: {stderr}", err=True)
-        raise typer.Exit(1) from e
-    else:
-        return {
-            "number": issue_number,
-            "url": issue_url,
-            "plan_url": pr_url,
-            "pr_number": pr_number,
-            "mode": "pr",
-        }
+
+    return {
+        "number": issue_number,
+        "url": issue_url,
+        "plan_url": pr_url,
+        "pr_number": pr_number,
+        "mode": "pr",
+    }
 
 
 def _post_gist(
@@ -650,28 +658,22 @@ def _post_gist(
     plan_path: Path,
     draft: IssueDraft,
 ) -> dict[str, Any]:
-    last_step = "init"
-    try:
-        last_step = "gist create"
+    with _post_step("gist create"):
         gist_url = _create_gist(plan_path)
 
-        last_step = "issue create"
+    with _post_step("issue create"):
         augmented_body = draft.body.rstrip() + f"\n\n📋 [Storming plan]({gist_url})\n"
         augmented_draft = draft._replace(body=augmented_body)
         issue_url = _create_issue(target, augmented_draft)
         issue_number = _issue_number(issue_url)
-    except subprocess.CalledProcessError as e:
-        stderr = (e.stderr or "").strip() or str(e)
-        typer.echo(f"stormitem post failed at step {last_step!r}: {stderr}", err=True)
-        raise typer.Exit(1) from e
-    else:
-        return {
-            "number": issue_number,
-            "url": issue_url,
-            "plan_url": gist_url,
-            "pr_number": None,
-            "mode": "gist",
-        }
+
+    return {
+        "number": issue_number,
+        "url": issue_url,
+        "plan_url": gist_url,
+        "pr_number": None,
+        "mode": "gist",
+    }
 
 
 # ---------------------------------------------------------------------------
