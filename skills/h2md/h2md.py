@@ -2,11 +2,11 @@
 # /// script
 # requires-python = ">=3.14"
 # dependencies = [
-#     "httpx>=0.28",
-#     "beautifulsoup4>=4.13",
-#     "lxml>=5.0",
-#     "markdownify>=0.14",
-#     "typer>=0.15",
+#     "httpx>=0.28.1",
+#     "beautifulsoup4>=4.15.0",
+#     "lxml>=6.1.1",
+#     "markdownify>=1.2.3",
+#     "typer>=0.26.8",
 #     "toon-format>=0.9.0b1",
 # ]
 # ///
