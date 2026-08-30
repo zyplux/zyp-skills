@@ -13,3 +13,15 @@
 ## 1.3 requiring the git tool
 
 ### 1.3.1 fails when git is missing from path
+
+## 1.4 requiring a version bump for changed skills
+
+### 1.4.1 rejects a changed skill whose version still matches its latest tag
+
+### 1.4.2 accepts a changed skill whose version is ahead of its latest tag
+
+### 1.4.3 rejects a skill version below its latest tag
+
+### 1.4.4 accepts a new skill without a release tag
+
+### 1.4.5 check command reports the release violation

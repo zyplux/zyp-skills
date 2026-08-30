@@ -1,4 +1,4 @@
 {
-  "extends": "@zyplux/tsconfig/bun.json",
+  "extends": "@zyplux/tsconfig/node.json",
   "include": ["eslint.config.ts", "prettier.config.ts", "vitest.config.ts"]
 }

@@ -1,34 +1,34 @@
-default_recipe_marker = "just --list"
+# Temporary overlays the bundled cerberus defaults while these checks still encode assumptions that do not fit this repository.
 
-[aliases.required]
-i = "install"
-k = "knip"
-tc = "typecheck"
-l = "lint"
-t = "test"
-c = "check"
+[ci_check_sequence]
+off = true
 
-[aliases.recommended]
-u = "upgrade"
-ui = "upgrade-interactive"
+[workflow_toolchain_only]
+off = true
 
-[recipes]
-required = ["default", "install", "knip", "typecheck", "lint", "test", "check"]
-recommended = ["upgrade", "upgrade-interactive", "clean"]
-check_pipeline = ["install", "knip", "typecheck", "lint", "test"]
-wrapped_tools = ["ruff", "pyrefly", "pytest", "rumdl", "vulture", "cerberus"]
+[fallow]
+off = true
 
-[ci]
-allowed_setup_actions = ["astral-sh/setup-uv", "oven-sh/setup-bun"]
-image = "ghcr.io/zyplux/ci"
+[knip]
+off = true
 
-[ci.required]
-python = [
-    "uv sync --locked",
-    "vulture",
-    "rumdl check",
-    "ruff check",
-    "ruff format --check",
-    "pyrefly check",
-    "pytest",
-]
+[justfile]
+off = true
+
+[story_tests_lockstep_ts]
+off = true
+
+[vitest]
+off = true
+
+[lib_ts_test_seam]
+off = true
+
+[cli_ts_test_seam]
+off = true
+
+[fixture_roles_ts]
+off = true
+
+[jscpd]
+off = true

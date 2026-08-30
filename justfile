@@ -16,65 +16,60 @@ alias pr := push-ready
 default:
     @just --list
 
-# Install both workspaces: bun + uv.
+# Install both workspaces: pnpm + uv.
 install:
-    bun install
+    pnpm install
     uv sync --all-packages --all-groups
 
 # Report unused files, deps, and exports: knip (JS workspace) + vulture (Python).
 knip:
-    bun run knip
+    pnpm run knip
     uv run vulture
 
-# Type-check both workspaces: tsc/bun for .ts, pyrefly for .py.
+# Type-check both workspaces: tsc/Node for .ts, pyrefly for .py.
 typecheck:
-    bun run typecheck
+    pnpm run typecheck
     uv run pyrefly check
 
-# Lint and format both workspaces with autofix, then verify org invariants with cerberus.
+# Lint and format both workspaces with autofix.
 lint:
-    bun run lint:fix
-    bun run format
-    uv run rumdl check --fix
+    pnpm run lint:fix
+    pnpm run format
+    uv run rumdl check --fix --no-cache
     uv run rumdl fmt
     uv run ruff check --fix
     uv run ruff format
-    uv run cerberus --fix
 
 # Run tests for both workspaces. Optional arg filters by test name; never fails when nothing matches.
 test name='':
-    bun run test {{ if name == '' { '' } else { '-t ' + quote(name) + ' --passWithNoTests' } }}
+    pnpm run test {{ if name == '' { '' } else { '-- -t ' + quote(name) + ' --passWithNoTests' } }}
     uv run pytest {{ if name == '' { '' } else { '-k ' + quote(name) } }} || [ "$?" -eq 5 ]
 
-# Full gate across both workspaces: install, knip, typecheck, lint, test — autofix throughout.
-check: install knip typecheck lint test
+# Verify applicable org invariants with cerberus, over the coverage reports `test` regenerates.
+cerberus:
+    uv run cerberus lint --fix
 
-# Upgrade deps across both workspaces: ncu bumps JS ranges; uv lock --upgrade + uv-bump raise Python >= floors. Forwards extra args to ncu.
+# Full gate across both workspaces: install, knip, typecheck, lint, test, cerberus — autofix throughout.
+check: install knip typecheck lint test cerberus
+
+# Upgrade the pinned toolchain plus JavaScript and Python workspace dependencies through cz.
 upgrade *args='':
-    bun run upgrade -- {{ args }}
-    uv lock --upgrade
-    uvx uv-bump -v
-    uv sync --all-packages --all-groups
+    pnpm run --silent cz upgrade {{ args }}
 
-# Interactively select JS upgrades, then non-interactively upgrade Python (uv has no interactive mode) and reinstall both.
+# Interactively select toolchain and JavaScript upgrades; Python upgrades remain non-interactive.
 upgrade-interactive:
-    bun run upgrade -- -i
-    bun install
-    uv lock --upgrade
-    uvx uv-bump -v
-    uv sync --all-packages --all-groups
+    @pnpm run --silent cz upgrade --interactive
 
 # Push the current branch and open a draft PR (-r/--ready marks it ready and enables auto-merge).
 push *flags:
-    bun run cz push-branch {{ flags }}
+    pnpm run cz push-branch {{ flags }}
 
 # Push the current branch and open a PR marked ready, enabling auto-merge.
 push-ready: (push "--ready")
 
-# Remove deps and caches from all workspaces.
-clean:
-    find . -type d \( -name node_modules -o -name .venv -o -name __pycache__ -o -name .tsbuild -o -name dist -o -name .ruff_cache -o -name .pytest_cache -o -name .rumdl_cache \) -prune -exec rm -rf {} +
-    find . -type f \( -name '*.tsbuildinfo' -o -name '.eslintcache' -o -name '*.py[cod]' \) -delete
+# Remove gitignored build artifacts and caches from all workspaces.
+clean *flags:
+    pnpm run cz clean {{ flags }}
 
 # CUSTOM
 

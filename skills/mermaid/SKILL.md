@@ -3,8 +3,8 @@ name: mermaid
 description: Generate Mermaid diagrams for markdown — flowcharts, sequence diagrams, state machines, ER diagrams, architectures, Gantt, Sankey, mindmaps, and 20+ other types. Use whenever the user asks to draw, sketch, visualize, diagram, chart, or graph anything that ends up in markdown (README, design doc, code comment, PR/issue, wiki) — even when 'mermaid' is not mentioned. Trigger on 'draw/show the flow/architecture/state/sequence/relationship', 'add a flowchart/sequence diagram', 'diagram how X works', 'graph the schema', or any time the user shows an existing mermaid block to extend or fix. Picking the right diagram type for the question matters more than syntax fluency — the skill carries a curated selection guide and per-type syntax references. Do NOT use for production charts from real data (matplotlib, plotly, d3), formal architecture-of-record modelling, or when the user wants a static image rather than markdown — Mermaid is for explanation that lives next to prose.
 metadata:
   kind: prompt
-  version: "0.16.0"
-  mermaid-version: "11.16.0"
+  version: "0.17.2"
+  mermaid-version: "11.17.2"
 ---
 
 # mermaid
@@ -70,14 +70,14 @@ Each row also lists the **Avoid-when** signal — the failure mode where a diffe
 
 | If you need to show... | Use | Avoid when |
 |---|---|---|
-| A process with branches/decisions | **Flowchart** | strictly linear (a list is shorter); actors/systems matter more than steps — use Sequence |
+| A process with branches/decisions, optionally hiding detail | **Flowchart** | strictly linear (a list is shorter); actors/systems matter more than steps — use Sequence |
 | Who calls whom, and in what order | **Sequence diagram** | only one actor (Flowchart is shorter); the conversation is OOP-call-shaped (nested invocations with returns) — use ZenUML |
 | A process across teams/systems, with ownership per step | **Swimlanes** *(new, syntax may evolve)* | ownership doesn't matter — use Flowchart; call ordering between two actors matters more than lanes — use Sequence |
 | OOP-call-shaped conversation (nested invocations, returns, try/catch) | **ZenUML** *(experimental)* | async messages with no clear caller/callee, or activations/notes/fragments matter — use Sequence |
 | How information flows over time across UI / commands / events / read models | **Event modeling** *(experimental)* | the system isn't actually event-driven, or you only need a request/response trace — use Sequence |
 | User-facing steps with sentiment | **User journey** | audience is engineers debugging — they want a Flowchart or Sequence, not feelings |
 | How an entity moves between states | **State diagram** | the "states" are really process steps — use Flowchart; dozens of mostly any-to-any transitions — use a transition table |
-| Tables and their relationships | **ER diagram** | data is denormalized, document-shaped, or column-family — a schema snippet works better |
+| Tables, their relationships, and logical domains | **ER diagram** | data is denormalized, document-shaped, or column-family — a schema snippet works better |
 | OOP types and their relationships | **Class diagram** | types are bags of fields with no behaviour — use ER |
 | Software architecture with formal abstraction levels | **C4** *(experimental)* | you don't need System/Container/Component/Deployment vocabulary — use Architecture or Block. Layout is partly controlled by statement order; sprites/tags/legend not yet supported |
 | System components and their links (cloud-flavoured, auto-layout) | **Architecture** *(beta)* | you need exact placement — use Block; you want formal abstraction levels — use C4 |
@@ -93,7 +93,7 @@ Each row also lists the **Avoid-when** signal — the failure mode where a diffe
 | Root causes of a problem | **Ishikawa** *(beta)* (fishbone) | open-ended brainstorm — use Mindmap; relationships aren't cause→effect — use Flowchart |
 | Flow quantities between nodes | **Sankey** | quantities don't conserve across stages — Mermaid does **not** enforce conservation, so under-attributed downstream values silently lie |
 | Small flat proportions of a whole | **Pie** | many slices, or slices similar in size — bar charts and Treemaps win; hierarchical data — use Treemap |
-| Numeric data over a dimension (line/bar) | **XY chart** | you have real data and a real charting library available — Mermaid XY is for embedded illustration, not analysis |
+| Numeric data over a dimension (line/bar), including named series | **XY chart** | you have real data and a real charting library available — Mermaid XY is for embedded illustration, not analysis |
 | Multivariate comparison across the same axes | **Radar** *(beta)* | axes aren't comparable in scale, or more than ~3 items overlaid — becomes unreadable |
 | 2x2 categorisation with author-named axes | **Quadrant** | one of the axes is fake (quadrants force two real dimensions); axes are specifically visibility × evolution — use Wardley |
 | Strategic position (visibility × evolution) | **Wardley map** *(beta)* | your axes aren't visibility/evolution — use Quadrant. Note: OWM coordinate format is `[visibility, evolution]`, not `(x, y)` |
@@ -131,42 +131,40 @@ When two diagrams seem to fit, this table picks the winner.
 
 Mermaid syntax has many quirks: escaping rules, edge ordering, node-shape keywords that change between versions, and several diagram types still flagged beta or experimental whose syntax shifts. Even when you think you know the syntax, **read the reference for the chosen type before writing** — it is sourced directly from the Mermaid project's docs and is the authoritative source of truth.
 
-The references in this skill target **Mermaid 11.16.0** (pinned in `metadata.mermaid-version` in the frontmatter — bump both on upgrade). If the renderer is on a different version, beta/experimental syntax may have shifted; verify against the reference and the live renderer.
+The references in this skill target **Mermaid 11.17.2** (pinned in `metadata.mermaid-version` in the frontmatter — bump both on upgrade). If the renderer is on a different version, beta/experimental syntax may have shifted; verify against the reference and the live renderer.
 
-| Type | Reference file |
-|---|---|
-| Flowchart | `references/syntax/flowchart.md` |
-| Sequence diagram | `references/syntax/sequenceDiagram.md` |
-| ZenUML | `references/syntax/zenuml.md` |
-| Event modeling | `references/syntax/eventmodeling.md` |
-| User journey | `references/syntax/userJourney.md` |
-| State diagram | `references/syntax/stateDiagram.md` |
-| Class diagram | `references/syntax/classDiagram.md` |
-| ER diagram | `references/syntax/entityRelationshipDiagram.md` |
-| C4 | `references/syntax/c4.md` |
-| Architecture | `references/syntax/architecture.md` |
-| Block | `references/syntax/block.md` |
-| Requirement diagram | `references/syntax/requirementDiagram.md` |
-| Venn | `references/syntax/venn.md` |
-| Gantt | `references/syntax/gantt.md` |
-| Timeline | `references/syntax/timeline.md` |
-| Gitgraph | `references/syntax/gitgraph.md` |
-| Mindmap | `references/syntax/mindmap.md` |
-| Treemap | `references/syntax/treemap.md` |
-| TreeView | `references/syntax/treeView.md` |
-| Ishikawa | `references/syntax/ishikawa.md` |
-| Sankey | `references/syntax/sankey.md` |
-| Pie | `references/syntax/pie.md` |
-| XY chart | `references/syntax/xyChart.md` |
-| Radar | `references/syntax/radar.md` |
-| Quadrant | `references/syntax/quadrantChart.md` |
-| Wardley map | `references/syntax/wardley.md` |
-| Packet | `references/syntax/packet.md` |
-| Kanban | `references/syntax/kanban.md` |
-| Swimlanes | `references/syntax/swimlanes.md` |
-| Railroad diagram | `references/syntax/railroad.md` |
-| Cynefin | `references/syntax/cynefin.md` |
-| Cross-type examples | `references/syntax/examples.md` |
+- [Flowchart](references/syntax/flowchart.md)
+- [Sequence diagram](references/syntax/sequenceDiagram.md)
+- [ZenUML](references/syntax/zenuml.md)
+- [Event modeling](references/syntax/eventmodeling.md)
+- [User journey](references/syntax/userJourney.md)
+- [State diagram](references/syntax/stateDiagram.md)
+- [Class diagram](references/syntax/classDiagram.md)
+- [ER diagram](references/syntax/entityRelationshipDiagram.md)
+- [C4](references/syntax/c4.md)
+- [Architecture](references/syntax/architecture.md)
+- [Block](references/syntax/block.md)
+- [Requirement diagram](references/syntax/requirementDiagram.md)
+- [Venn](references/syntax/venn.md)
+- [Gantt](references/syntax/gantt.md)
+- [Timeline](references/syntax/timeline.md)
+- [Gitgraph](references/syntax/gitgraph.md)
+- [Mindmap](references/syntax/mindmap.md)
+- [Treemap](references/syntax/treemap.md)
+- [TreeView](references/syntax/treeView.md)
+- [Ishikawa](references/syntax/ishikawa.md)
+- [Sankey](references/syntax/sankey.md)
+- [Pie](references/syntax/pie.md)
+- [XY chart](references/syntax/xyChart.md)
+- [Radar](references/syntax/radar.md)
+- [Quadrant](references/syntax/quadrantChart.md)
+- [Wardley map](references/syntax/wardley.md)
+- [Packet](references/syntax/packet.md)
+- [Kanban](references/syntax/kanban.md)
+- [Swimlanes](references/syntax/swimlanes.md)
+- [Railroad diagram](references/syntax/railroad.md)
+- [Cynefin](references/syntax/cynefin.md)
+- [Cross-type examples](references/syntax/examples.md)
 
 ### 5. Write the diagram
 
@@ -180,6 +178,8 @@ flowchart TD
     B -->|Yes| C[Action]
     B -->|No| D[Stop]
 ```
+
+Use semantic shapes when their meaning helps: `folder` (alias `directory`), `bucket`, `console`, `browser`, and `person` are available through `A@{ shape: browser }`. A subgraph whose internals would overwhelm an overview can render as one compact node with `groupId@{ view: collapsed }`; boundary-crossing edges are redirected to it and nested collapses resolve to the outermost collapsed ancestor.
 
 #### Sequence diagram
 
@@ -211,6 +211,8 @@ erDiagram
     PRODUCT ||--o{ LINE_ITEM : appears_in
 ```
 
+ER subgraphs can group entities into logical domains, nest other subgraphs, connect relationships to entities or subgraph ids, and set their own direction. Quote ids containing spaces when a relationship references them.
+
 #### Class diagram
 
 ```mermaid
@@ -233,9 +235,9 @@ For anything beyond these basics — node shapes, styling, configuration, advanc
 Before considering the diagram done, ask:
 
 1. **Does it answer the question?** Read the diagram with fresh eyes — if a stranger saw only the diagram and the question, would they get an answer?
-2. **Is a legend longer than three lines required?** If yes, the diagram type is wrong. Split, simplify, or pick a different type.
+2. **Is a long explanatory legend required to decode the shapes or arrows?** If yes, the diagram type is wrong. Split, simplify, or pick a different type. A standard series legend on an XY chart is fine.
 3. **Are arrow labels carrying their weight?** Unlabeled arrows in a flowchart with decisions usually mean missing information.
-4. **Is the diagram small enough to read?** Aim for under ~15 nodes, ~10 messages, or ~8 columns. Larger diagrams stop reading and start being a wall.
+4. **Is the diagram small enough to read?** Aim for under ~15 visible nodes, ~10 messages, or ~8 columns. Collapse optional flowchart detail or split a larger diagram before it becomes a wall.
 
 If any answer is no, iterate. Diagrams are cheap to rewrite.
 
@@ -248,7 +250,7 @@ Distilled from the selection guide. Apply these when the table feels ambiguous.
 1. **Write the question first.** "Which service times out?" → sequence. "What state is an order in?" → state. "Where does the budget go?" → sankey or treemap. If you can't write a single question the diagram answers, the diagram is decoration.
 2. **Count the actors.** One actor and decisions → flowchart. Multiple actors and ordering → sequence (or ZenUML if call-shaped). Multiple actors and no ordering → architecture/block (or C4 for layered abstraction).
 3. **Time vs ordering vs neither.** Calendar time → Gantt/timeline. Logical ordering (step 1, step 2) → flowchart/sequence. Event-time across swimlanes → event modeling. Neither → structural diagrams (class, ER, C4, block).
-4. **If the diagram needs a legend longer than three lines, it's the wrong diagram** — split it, or pick a different type.
+4. **If the diagram needs a long explanatory legend to decode its notation, it's the wrong diagram** — split it, or pick a different type. Standard data-series legends are not a warning sign.
 5. **Mermaid is for explanation, not analysis.** When data quality and precision matter (real charts, real schemas, real architecture-of-record), a dedicated tool will serve better. Mermaid wins when the diagram lives next to prose in markdown.
 6. **Beta means beta.** Several types are still in beta (`architecture-beta`, `treemap-beta`, `treeView-beta`, `ishikawa-beta`, `venn-beta`, `wardley-beta`, `radar-beta`, `railroad-*-beta`), Swimlanes is brand-new with syntax that may still evolve, and some are experimental (C4, ZenUML, event modeling). Their syntax may shift between Mermaid versions. Pin a known version when it matters and re-test on upgrade.
 
@@ -259,7 +261,11 @@ Distilled from the selection guide. Apply these when the table feels ambiguous.
 - **Hallucinated syntax.** Mermaid evolves quickly and small details (the exact arrow style, the keyword for a node shape, the way to embed markdown in labels) shift between versions. Read the syntax reference even when you think you know.
 - **Reserved words in node IDs.** `end` in lowercase breaks flowcharts. The letters `o` and `x` as the first character of a node id can be parsed as edge styles (`A---oB` becomes a circle edge). When in doubt, capitalize or wrap in quotes.
 - **Labels: special chars and length.** Wrap labels containing parentheses, colons, or square brackets in `"..."`. Use `<br/>` to force line breaks in long labels — *especially edge labels*, which renderers otherwise auto-wrap at unfortunate boundaries. HTML entities (`#quot;`, `#35;`) work for the trickiest characters.
-- **Overlong diagrams.** A flowchart with 40 nodes is a debugging session, not a diagram. Break it into a top-level overview plus zoomed-in subdiagrams.
+- **Overlong diagrams.** A flowchart with 40 visible nodes is a debugging session, not a diagram. Collapse subgraphs whose internals are optional, or break it into a top-level overview plus zoomed-in subdiagrams.
+- **Configuration syntax.** Put configuration in YAML frontmatter inside the Mermaid block. Do not reach for the legacy `%%{init: ...}%%` directive when frontmatter expresses the same setting.
+- **C4 wrapping.** C4 element labels wrap by default. Set `config.c4.wrap: false` only when a deliberately unwrapped layout is easier to read.
+- **Sequence group colors.** In a sequence `box`, put the RGB, RGBA, HSL, or HSLA color before the optional description. Hex colors are parsed as comments and do not work there.
+- **XY legends.** Name a line or bar series to include it in the legend; leave it unnamed to omit it. Use `showLegend`, `legendFontSize`, `legendPadding`, and `legendTextColor` when the default legend obscures the chart.
 - **Auto-layout fights.** When `flowchart` or `architecture` produces a tangle, switch to `block` for hand-placed layout instead of fighting the layout engine with positional hacks.
 - **Beta diagram surprises.** A diagram that worked yesterday may emit a parse error after a Mermaid bump. Check the syntax reference for the current syntax and confirm the renderer's Mermaid version.
 - **Quantities that don't conserve.** In Sankey, viewers infer flow conservation from the visual. If sources don't equal sinks, the diagram silently lies. Audit the numbers before publishing.

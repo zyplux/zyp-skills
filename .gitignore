@@ -1,4 +1,4 @@
-# JavaScript / bun
+# JavaScript / pnpm
 node_modules/
 dist/
 .tsbuild/

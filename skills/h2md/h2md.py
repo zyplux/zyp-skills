@@ -20,6 +20,7 @@ import shutil
 import subprocess
 import tempfile
 from datetime import UTC, datetime
+from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any
 from urllib.parse import urlparse
@@ -211,11 +212,11 @@ def _has_any_class(tag: Tag, class_set: set[str]) -> bool:
 
 
 def _flatten_class_tabs(soup: BeautifulSoup) -> None:
-    for container in soup.find_all(lambda t: isinstance(t, Tag) and _has_any_class(t, _TAB_CONTAINER_CLS)):
+    for container in soup.find_all(partial(_has_any_class, class_set=_TAB_CONTAINER_CLS)):
         if container.find(role="tablist"):
             continue
 
-        buttons = container.find_all(lambda t: isinstance(t, Tag) and _has_any_class(t, _TAB_BUTTON_CLS))
+        buttons = container.find_all(partial(_has_any_class, class_set=_TAB_BUTTON_CLS))
         if not buttons:
             all_children = [c for c in container.children if isinstance(c, Tag)]
             nav = next(
@@ -229,7 +230,7 @@ def _flatten_class_tabs(soup: BeautifulSoup) -> None:
         if not labels:
             continue
 
-        panels = container.find_all(lambda t: isinstance(t, Tag) and _has_any_class(t, _TAB_PANEL_CLS))
+        panels = container.find_all(partial(_has_any_class, class_set=_TAB_PANEL_CLS))
         if not panels:
             panels = [c for c in container.children if isinstance(c, Tag) and c.find("pre")]
 
@@ -299,7 +300,7 @@ _COPY_CLS = {
 def _strip_copy_elements(soup: BeautifulSoup) -> None:
     for pre in soup.find_all("pre"):
         container = pre.parent if pre.parent and isinstance(pre.parent, Tag) else pre
-        for el in container.find_all(lambda t: isinstance(t, Tag) and _has_any_class(t, _COPY_CLS)):
+        for el in container.find_all(partial(_has_any_class, class_set=_COPY_CLS)):
             el.decompose()
 
 
