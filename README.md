@@ -12,6 +12,7 @@ A collection of skills for Claude Code.
 | [gen-commit-message](skills/gen-commit-message/SKILL.md) | prompt | Generate a Conventional Commits message for the current project |
 | [mermaid](skills/mermaid/SKILL.md) | prompt | Pick the right Mermaid diagram type and render it correctly |
 | [plan-storm](skills/plan-storm/SKILL.md) | prompt | Brainstorm a `plan.md` through option-rich rounds before any code |
+| [resolve-pr-review-comments](skills/resolve-pr-review-comments/SKILL.md) | prompt | Resolve CI failures and Copilot review comments until the PR gates are green |
 
 Each skill declares `metadata.kind` in its SKILL.md: `cli` skills ship an executable; `prompt` skills are SKILL.md-driven with no binary. Omitting `metadata.kind` defaults to `prompt`.
 
