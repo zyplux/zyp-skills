@@ -24,7 +24,7 @@ import yaml
 from toon_format import encode
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator
 
 __version__ = "0.2.0"
 
@@ -595,7 +595,7 @@ def _load_issue_draft(work_dir: Path, repo: str) -> tuple[IssueDraft, str, str]:
 
 
 @contextmanager
-def _post_step(step: str) -> Iterator[None]:
+def _post_step(step: str) -> Generator[None]:
     try:
         yield
     except subprocess.CalledProcessError as e:

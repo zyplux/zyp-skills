@@ -71,10 +71,9 @@ push *flags:
 # Push the current branch and open a PR marked ready, enabling auto-merge.
 push-ready: (push "--ready")
 
-# Remove deps and caches from all workspaces.
-clean:
-    find . -type d \( -name node_modules -o -name .venv -o -name __pycache__ -o -name .tsbuild -o -name dist -o -name .ruff_cache -o -name .pytest_cache -o -name .rumdl_cache \) -prune -exec rm -rf {} +
-    find . -type f \( -name '*.tsbuildinfo' -o -name '.eslintcache' -o -name '*.py[cod]' \) -delete
+# Remove gitignored build artifacts and caches from all workspaces.
+clean *flags:
+    bun run cz clean {{ flags }}
 
 # CUSTOM
 
