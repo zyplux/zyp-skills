@@ -133,3 +133,4 @@ def test_action_report_separates_copilot_gates(tmp_path: Path) -> None:
     assert "CI FAILURES (1)\n\n[1/1] ci" in completed.stdout
     assert "[2/" not in completed.stdout
     assert "UNRESOLVED COPILOT THREADS (1)" in completed.stdout
+    assert "Wait 3 minutes, then rerun this script." in completed.stdout

@@ -595,7 +595,7 @@ def print_next_action(
         "Run just c until the full gate passes.",
         "Commit all resulting changes, if any.",
         "Run just pr to push and retrigger Copilot review.",
-        "Set a 60-second wake-up; when it fires, rerun this script.",
+        "Wait 3 minutes, then rerun this script.",
     ])
     write_line("NEXT ACTION")
     for index, action in enumerate(actions, start=1):
