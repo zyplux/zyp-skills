@@ -1,5 +1,6 @@
 # Copilot review instructions
 
 - The mandatory `ci` check runs the full quality gate on every push: ruff (`select = ["ALL"]`), pyrefly, vulture, knip, tsc, eslint, rumdl, and both test suites. Do not report syntax, typechecking and linting errors - leave these to the deterministic ci gate.
+- `pnpm/setup` installs the runtime declared in `package.json` under `devEngines.runtime` and places it on `PATH`. Its install step uses `--no-runtime` after setup to avoid installing that runtime twice; do not request a separate runtime setup action.
 - Before claiming a library invokes user code with a specific calling convention (positional vs keyword, argument order), verify against that library's own adapter layer, not the underlying framework's convention. Example: Typer wraps `typer.Option` callbacks via signature inspection and calls them with keyword arguments, so keyword-only parameters (`*, value`) are valid even though raw Click callbacks are positional.
 - Story docs (`tests/**/stories/*.md`) are lint-enforced mirrors of test identifiers: every `###` criterion title must match its `test_N_M_K_<title>` function name word-for-word (lowercase, case-sensitive), and section headers follow the same lowercase style. Do not suggest prose capitalization or rewording in these files.
