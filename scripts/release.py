@@ -59,25 +59,31 @@ class ToolNotFoundError(RuntimeError):
         super().__init__(f"`{tool}` not found on PATH")
 
 
-def _git_show(ref: str, path: str) -> str | None:
-    """The single audited subprocess boundary for release.
+class ReleaseValidationError(RuntimeError):
+    pass
+
+
+def run_git(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+    """The single audited subprocess boundary for release operations.
 
     `git` is resolved to an absolute path via PATH and args are passed as a
     list, so the shell is never invoked and nothing is shell-interpreted.
-    `ref` is program-constructed; `path` may embed a validated CLI argument,
-    and a hostile value can at worst address a nonexistent blob, yielding None.
     """
     executable = shutil.which("git")
     if executable is None:
         msg = "git"
         raise ToolNotFoundError(msg)
-    proc = subprocess.run(
-        [executable, "show", f"{ref}:{path}"],
+    return subprocess.run(
+        [executable, *args],
         cwd=REPO_ROOT,
         text=True,
         capture_output=True,
-        check=False,
+        check=check,
     )
+
+
+def _git_show(ref: str, path: str) -> str | None:
+    proc = run_git("show", f"{ref}:{path}", check=False)
     return proc.stdout if proc.returncode == 0 else None
 
 
@@ -123,6 +129,54 @@ def diff_kind(base: str, current: str) -> DiffKind:
     return "none"
 
 
+def parse_semver(version: str) -> tuple[int, int, int] | None:
+    match = SEMVER_RE.fullmatch(version)
+    return (int(match[1]), int(match[2]), int(match[3])) if match else None
+
+
+def find_latest_release(skill: str) -> tuple[tuple[int, int, int], str] | None:
+    prefix = f"{skill}-v"
+    releases = [
+        (semver, tag)
+        for tag in run_git("tag", "--list", f"{prefix}*").stdout.splitlines()
+        if (semver := parse_semver(tag.removeprefix(prefix))) is not None
+    ]
+    return max(releases) if releases else None
+
+
+def has_skill_changes(skill: str, tag: str) -> bool:
+    path = f"skills/{skill}"
+    tracked = run_git("diff", "--name-only", tag, "--", path).stdout
+    untracked = run_git("ls-files", "--others", "--exclude-standard", "--", path).stdout
+    return bool(tracked or untracked)
+
+
+def find_release_errors() -> list[str]:
+    errors: list[str] = []
+    for skill_dir in sorted(path for path in SKILLS_DIR.iterdir() if (path / "SKILL.md").is_file()):
+        skill = skill_dir.name
+        version = read_skill_md_version(skill_dir)
+        current = parse_semver(version) if version is not None else None
+        if current is None:
+            errors.append(f"{skill} has no valid semantic version in SKILL.md")
+            continue
+        latest = find_latest_release(skill)
+        if latest is None:
+            continue
+        released, tag = latest
+        if current < released:
+            errors.append(f"{skill} version {version} is below {tag}")
+        elif current == released and has_skill_changes(skill, tag):
+            errors.append(f"{skill} changed since {tag} but remains at version {version}; run `just bump {skill}`")
+    return errors
+
+
+def validate_release_versions() -> None:
+    errors = find_release_errors()
+    if errors:
+        raise ReleaseValidationError("\n".join(errors))
+
+
 def decide_bump(base: str, current: str, requested: BumpKind) -> str | None:
     """Return the new version, or None if the existing one already wins."""
     current_kind = diff_kind(base, current)
@@ -161,6 +215,16 @@ def _apply_version_bump(skill: str, new_version: str) -> None:
         targets.append(pkg)
     for t in targets:
         _set_version_in(t, new_version)
+
+
+@app.command()
+def check() -> None:
+    """Require every changed, released skill to carry a version bump."""
+    try:
+        validate_release_versions()
+    except ReleaseValidationError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(1) from exc
 
 
 @app.command()

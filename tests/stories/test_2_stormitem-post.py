@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import subprocess
 from typing import TYPE_CHECKING, cast
+from unittest.mock import Mock
 
 import pytest
 import yaml
@@ -22,6 +23,10 @@ if TYPE_CHECKING:
 ISSUE_URL = "https://github.com/zyplux/zyp-skills/issues/42"
 PR_URL = "https://github.com/zyplux/zyp-skills/pull/43"
 GIST_URL = "https://gist.github.com/zyplux/0123abc"
+
+
+def _tool_path(tool: str) -> str:
+    return f"/usr/bin/{tool}"
 
 
 class FakeGh:
@@ -83,7 +88,7 @@ def work_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 @pytest.fixture
 def install_gh(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("shutil.which", lambda tool: f"/usr/bin/{tool}")
+    monkeypatch.setattr("shutil.which", _tool_path)
 
 
 def _post(runner: CliRunner, stormitem: ModuleType, work_dir: Path) -> object:
@@ -168,7 +173,7 @@ def test_2_2_1_reports_the_failing_step_when_a_gh_call_errors(
 def test_2_2_2_fails_when_gh_is_missing_from_path(
     stormitem: ModuleType, runner: CliRunner, work_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("shutil.which", lambda _tool: None)
+    monkeypatch.setattr("shutil.which", Mock(return_value=None))
 
     result = runner.invoke(stormitem.app, ["post", "zyp-skills", str(work_dir)])
 

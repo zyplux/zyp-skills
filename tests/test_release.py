@@ -168,3 +168,7 @@ def test_help_lists_bump_subcommand() -> None:
     assert result.exit_code == 0, result.output
     assert "bump" in result.output.lower()
     assert "skill" in result.output.lower()
+
+
+def test_changed_skills_have_release_bump() -> None:
+    release.validate_release_versions()

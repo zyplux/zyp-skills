@@ -15,24 +15,30 @@ jobs:
   ci:
     name: ci
     runs-on: ubuntu-latest
-    container: ghcr.io/zyplux/ci:0.1.1
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - run: bun install --frozen-lockfile
+      - uses: pnpm/setup@v2
+        with:
+          cache: true
+          install: false
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          python-version: '3.14'
+          enable-cache: true
+      - run: pnpm install --frozen-lockfile --no-runtime
       - run: uv sync --locked --all-groups
-      - run: bun run knip
+      - run: pnpm run knip
       - run: uv run --no-sync vulture
-      - run: bun run typecheck
-      - run: uv run --no-sync rumdl check
-      - run: uv run --no-sync rumdl fmt --check
-      - run: bun run lint
-      - run: bunx prettier --check .
+      - run: pnpm run typecheck
+      - run: uv run --no-sync rumdl check --no-cache
+      - run: uv run --no-sync rumdl fmt --check --no-cache
+      - run: pnpm run lint
+      - run: pnpm exec prettier --check .
       - run: uv run --no-sync ruff check
       - run: uv run --no-sync ruff format --check
       - run: uv run --no-sync pyrefly check
-      - run: bun run test
+      - run: pnpm run test
       - run: uv run --no-sync pytest
-      - run: uv run --no-sync cerberus
+      - run: uv run --no-sync cerberus lint

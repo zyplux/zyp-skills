@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple, cast
+from unittest.mock import Mock
 
 import pytest
 import yaml
@@ -474,7 +475,7 @@ def test_post_pr_mode_full_flow(
 ) -> None:
     work = _make_workdir(tmp_path)
     rec = _Recorder()
-    monkeypatch.setattr(stormitem, "_detect_push", lambda _target: True)
+    monkeypatch.setattr(stormitem, "_detect_push", Mock(return_value=True))
     monkeypatch.setattr(
         stormitem,
         "_create_issue",
@@ -516,14 +517,14 @@ def test_post_pr_body_falls_back_when_plan_has_only_headers(
 ) -> None:
     work = _make_workdir(tmp_path, plan_text="# Title\n\n## Section\n")
     rec = _Recorder()
-    monkeypatch.setattr(stormitem, "_detect_push", lambda _target: True)
-    monkeypatch.setattr(stormitem, "_create_issue", lambda *_a, **_k: "https://github.com/zyplux/zyp-skills/issues/1")
-    monkeypatch.setattr(stormitem, "_default_branch", lambda *_a, **_k: "main")
-    monkeypatch.setattr(stormitem, "_ref_sha", lambda *_a, **_k: "sha")
-    monkeypatch.setattr(stormitem, "_create_branch", lambda *_a, **_k: None)
-    monkeypatch.setattr(stormitem, "_put_file", lambda *_a, **_k: None)
+    monkeypatch.setattr(stormitem, "_detect_push", Mock(return_value=True))
+    monkeypatch.setattr(stormitem, "_create_issue", Mock(return_value="https://github.com/zyplux/zyp-skills/issues/1"))
+    monkeypatch.setattr(stormitem, "_default_branch", Mock(return_value="main"))
+    monkeypatch.setattr(stormitem, "_ref_sha", Mock(return_value="sha"))
+    monkeypatch.setattr(stormitem, "_create_branch", Mock(return_value=None))
+    monkeypatch.setattr(stormitem, "_put_file", Mock(return_value=None))
     monkeypatch.setattr(stormitem, "_create_pr", rec.make("pr", returns="https://github.com/zyplux/zyp-skills/pull/2"))
-    monkeypatch.setattr(stormitem, "_edit_issue", lambda *_a, **_k: None)
+    monkeypatch.setattr(stormitem, "_edit_issue", Mock(return_value=None))
 
     invoke("post", "zyp-skills", str(work))
     pr_call = next(c for c in rec.calls if c[0] == "pr")
@@ -537,22 +538,22 @@ def test_post_pr_mode_cleans_non_tmp_dir(
     fake_tmp.mkdir()
     monkeypatch.setattr("tempfile.gettempdir", lambda: str(fake_tmp))
     work = _make_workdir(tmp_path / "elsewhere")
-    monkeypatch.setattr(stormitem, "_detect_push", lambda _target: True)
+    monkeypatch.setattr(stormitem, "_detect_push", Mock(return_value=True))
     monkeypatch.setattr(
         stormitem,
         "_create_issue",
-        lambda *_a, **_k: "https://github.com/zyplux/zyp-skills/issues/1",
+        Mock(return_value="https://github.com/zyplux/zyp-skills/issues/1"),
     )
-    monkeypatch.setattr(stormitem, "_default_branch", lambda *_a, **_k: "main")
-    monkeypatch.setattr(stormitem, "_ref_sha", lambda *_a, **_k: "sha")
-    monkeypatch.setattr(stormitem, "_create_branch", lambda *_a, **_k: None)
-    monkeypatch.setattr(stormitem, "_put_file", lambda *_a, **_k: None)
+    monkeypatch.setattr(stormitem, "_default_branch", Mock(return_value="main"))
+    monkeypatch.setattr(stormitem, "_ref_sha", Mock(return_value="sha"))
+    monkeypatch.setattr(stormitem, "_create_branch", Mock(return_value=None))
+    monkeypatch.setattr(stormitem, "_put_file", Mock(return_value=None))
     monkeypatch.setattr(
         stormitem,
         "_create_pr",
-        lambda *_a, **_k: "https://github.com/zyplux/zyp-skills/pull/2",
+        Mock(return_value="https://github.com/zyplux/zyp-skills/pull/2"),
     )
-    monkeypatch.setattr(stormitem, "_edit_issue", lambda *_a, **_k: None)
+    monkeypatch.setattr(stormitem, "_edit_issue", Mock(return_value=None))
 
     invoke("post", "zyp-skills", str(work))
     assert not work.exists()
@@ -563,22 +564,22 @@ def test_post_pr_mode_keeps_tmp_dir(
 ) -> None:
     work = _make_workdir(tmp_workdir)
 
-    monkeypatch.setattr(stormitem, "_detect_push", lambda _target: True)
+    monkeypatch.setattr(stormitem, "_detect_push", Mock(return_value=True))
     monkeypatch.setattr(
         stormitem,
         "_create_issue",
-        lambda *_a, **_k: "https://github.com/zyplux/zyp-skills/issues/1",
+        Mock(return_value="https://github.com/zyplux/zyp-skills/issues/1"),
     )
-    monkeypatch.setattr(stormitem, "_default_branch", lambda *_a, **_k: "main")
-    monkeypatch.setattr(stormitem, "_ref_sha", lambda *_a, **_k: "sha")
-    monkeypatch.setattr(stormitem, "_create_branch", lambda *_a, **_k: None)
-    monkeypatch.setattr(stormitem, "_put_file", lambda *_a, **_k: None)
+    monkeypatch.setattr(stormitem, "_default_branch", Mock(return_value="main"))
+    monkeypatch.setattr(stormitem, "_ref_sha", Mock(return_value="sha"))
+    monkeypatch.setattr(stormitem, "_create_branch", Mock(return_value=None))
+    monkeypatch.setattr(stormitem, "_put_file", Mock(return_value=None))
     monkeypatch.setattr(
         stormitem,
         "_create_pr",
-        lambda *_a, **_k: "https://github.com/zyplux/zyp-skills/pull/2",
+        Mock(return_value="https://github.com/zyplux/zyp-skills/pull/2"),
     )
-    monkeypatch.setattr(stormitem, "_edit_issue", lambda *_a, **_k: None)
+    monkeypatch.setattr(stormitem, "_edit_issue", Mock(return_value=None))
 
     invoke("post", "zyp-skills", str(work))
     assert work.exists()
@@ -593,7 +594,7 @@ def test_post_gist_mode_full_flow(
 ) -> None:
     work = _make_workdir(tmp_path)
     rec = _Recorder()
-    monkeypatch.setattr(stormitem, "_detect_push", lambda _target: False)
+    monkeypatch.setattr(stormitem, "_detect_push", Mock(return_value=False))
     monkeypatch.setattr(
         stormitem,
         "_create_gist",
@@ -659,8 +660,8 @@ def test_post_issue_url_without_number_fails(
     invoke: Callable[..., Result], stormitem: ModuleType, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     work = _make_workdir(tmp_path)
-    monkeypatch.setattr(stormitem, "_detect_push", lambda _target: True)
-    monkeypatch.setattr(stormitem, "_create_issue", lambda *_a, **_k: "https://example.com/no-number")
+    monkeypatch.setattr(stormitem, "_detect_push", Mock(return_value=True))
+    monkeypatch.setattr(stormitem, "_create_issue", Mock(return_value="https://example.com/no-number"))
 
     result = invoke("post", "zyp-skills", str(work), expect_error=True)
     assert result.exit_code != 0
@@ -670,13 +671,13 @@ def test_post_pr_url_without_number_fails(
     invoke: Callable[..., Result], stormitem: ModuleType, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     work = _make_workdir(tmp_path)
-    monkeypatch.setattr(stormitem, "_detect_push", lambda _target: True)
-    monkeypatch.setattr(stormitem, "_create_issue", lambda *_a, **_k: "https://github.com/zyplux/zyp-skills/issues/1")
-    monkeypatch.setattr(stormitem, "_default_branch", lambda *_a, **_k: "main")
-    monkeypatch.setattr(stormitem, "_ref_sha", lambda *_a, **_k: "sha")
-    monkeypatch.setattr(stormitem, "_create_branch", lambda *_a, **_k: None)
-    monkeypatch.setattr(stormitem, "_put_file", lambda *_a, **_k: None)
-    monkeypatch.setattr(stormitem, "_create_pr", lambda *_a, **_k: "https://example.com/no-number")
+    monkeypatch.setattr(stormitem, "_detect_push", Mock(return_value=True))
+    monkeypatch.setattr(stormitem, "_create_issue", Mock(return_value="https://github.com/zyplux/zyp-skills/issues/1"))
+    monkeypatch.setattr(stormitem, "_default_branch", Mock(return_value="main"))
+    monkeypatch.setattr(stormitem, "_ref_sha", Mock(return_value="sha"))
+    monkeypatch.setattr(stormitem, "_create_branch", Mock(return_value=None))
+    monkeypatch.setattr(stormitem, "_put_file", Mock(return_value=None))
+    monkeypatch.setattr(stormitem, "_create_pr", Mock(return_value="https://example.com/no-number"))
 
     result = invoke("post", "zyp-skills", str(work), expect_error=True)
     assert result.exit_code != 0
