@@ -20,4 +20,4 @@ The current Mermaid version this skill targets is in `../SKILL.md` frontmatter u
 
 3. **Update `../SKILL.md` from that diff.** Integrate the current capabilities into its selection guidance, examples, heuristics, and pitfalls; then set `metadata.mermaid-version` to the upstream release.
 
-4. **Bump and validate.** Bump both `metadata.version` and the `version` in the `../SKILL.md`. Minor and patch must match between the two.
+4. **Bump and validate.** Bump both `metadata.version` and `metadata.mermaid-version` in `../SKILL.md`. Minor and patch must match between the two.
