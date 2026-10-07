@@ -5,7 +5,7 @@
 # here is a versioned PR — there is no user-config layer in v1.
 #
 # The `zyp-skills` features must match the directory listing under
-# `skills/`. The sync test in tests/skills/stormitem/test_registry_sync.py
+# `skills/`. The sync test in tests/skills/stormitem/test_stormitem.py
 # enforces this.
 
 [repos.zyp-skills]
@@ -16,6 +16,7 @@ features = [
     "mermaid",
     "peek",
     "plan-storm",
+    "resolve-pr-codex-threads",
     "resolve-pr-review-comments",
     "stormitem",
     "suggest",

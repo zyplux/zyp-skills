@@ -47,7 +47,7 @@ test name='':
 
 # Verify applicable org invariants with cerberus, over the coverage reports `test` regenerates.
 cerberus:
-    uv run cerberus lint --fix
+    uv run cerberus --fix
 
 # Full gate across both workspaces: install, knip, typecheck, lint, test, cerberus — autofix throughout.
 check: install knip typecheck lint test cerberus

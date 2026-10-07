@@ -26,7 +26,7 @@ from toon_format import encode
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REGISTRY_PATH = SCRIPT_DIR / "registry.toml"

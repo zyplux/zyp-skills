@@ -1,6 +1,6 @@
-import { defineConfig } from 'vitest/config';
+import type { ViteUserConfig } from 'vitest/config';
 
-export default defineConfig({
+export default {
   test: {
     coverage: {
       enabled: true,
@@ -14,4 +14,4 @@ export default defineConfig({
     },
     passWithNoTests: true,
   },
-});
+} satisfies ViteUserConfig;

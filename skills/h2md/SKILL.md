@@ -7,7 +7,7 @@ description: >
   Never manually fetch+parse HTML or use WebFetch for article extraction when h2md is available.
 metadata:
   kind: cli
-  version: "0.7.0"
+  version: "0.7.1"
   user-invocable: "true"
   argument-hint: <url> [--no-assets] [--selector SEL] [--copy-to PATH]
 ---
