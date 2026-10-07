@@ -21,14 +21,5 @@ off = true
 [vitest]
 off = true
 
-[lib_ts_test_seam]
-off = true
-
-[cli_ts_test_seam]
-off = true
-
-[fixture_roles_ts]
-off = true
-
 [jscpd]
 off = true
