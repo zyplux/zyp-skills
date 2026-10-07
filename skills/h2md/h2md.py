@@ -35,9 +35,7 @@ from toon_format import decode, encode
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-    from toon_format.types import JsonValue
-
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 
 app = typer.Typer()
 
@@ -753,7 +751,7 @@ def _context_around(text: str, start: int, end: int, ctx: int = 40) -> str:
 def _normalize(workspace: Path) -> None:
     md = (workspace / "article.raw.md").read_text()
     meta_path = workspace / "meta.toon"
-    decoded_meta: JsonValue = decode(meta_path.read_text()) if meta_path.exists() else {}
+    decoded_meta: object = decode(meta_path.read_text()) if meta_path.exists() else None
     meta: dict[str, Any] = decoded_meta if isinstance(decoded_meta, dict) else {}
 
     frontmatter_lines = ["---"]
@@ -953,7 +951,7 @@ def _postprocess(workspace: Path) -> tuple[list[dict[str, Any]], list[dict[str, 
 
 def _handoff(workspace: Path, url: str, issues: list[dict[str, Any]], sections: list[dict[str, Any]]) -> None:
     meta_path = workspace / "meta.toon"
-    decoded_meta: JsonValue = decode(meta_path.read_text()) if meta_path.exists() else {}
+    decoded_meta: object = decode(meta_path.read_text()) if meta_path.exists() else None
     meta: dict[str, Any] = decoded_meta if isinstance(decoded_meta, dict) else {}
     lint_path = workspace / "lint.report.txt"
     lint_text = lint_path.read_text() if lint_path.exists() else ""
