@@ -16,8 +16,7 @@ features = [
     "mermaid",
     "peek",
     "plan-storm",
-    "resolve-pr-codex-threads",
-    "resolve-pr-review-comments",
+    "resolve-pr-gate",
     "stormitem",
     "suggest",
 ]

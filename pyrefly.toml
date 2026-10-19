@@ -1,4 +1,5 @@
 preset = "strict"
+min-severity = "warn"
 disable-project-excludes-heuristics = true
 use-ignore-files = false
 

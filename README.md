@@ -1,6 +1,6 @@
 # zyp-skills
 
-A collection of skills for Claude Code.
+Reusable skills for Codex and Claude Code.
 
 ## Skills
 
@@ -12,8 +12,7 @@ A collection of skills for Claude Code.
 | [gen-commit-message](skills/gen-commit-message/SKILL.md) | prompt | Generate a Conventional Commits message for the current project |
 | [mermaid](skills/mermaid/SKILL.md) | prompt | Pick the right Mermaid diagram type and render it correctly |
 | [plan-storm](skills/plan-storm/SKILL.md) | prompt | Brainstorm a `plan.md` through option-rich rounds before any code |
-| [resolve-pr-review-comments](skills/resolve-pr-review-comments/SKILL.md) | prompt | Resolve CI failures and Copilot review comments until the PR gates are green |
-| [resolve-pr-codex-threads](skills/resolve-pr-codex-threads/SKILL.md) | prompt | Resolve CI failures and Codex review threads until review is complete |
+| [resolve-pr-gate](skills/resolve-pr-gate/SKILL.md) | prompt | Resolve CI failures and findings from Copilot and Codex until the aggregate PR gate passes |
 
 Each skill declares `metadata.kind` in its SKILL.md: `cli` skills ship an executable; `prompt` skills are SKILL.md-driven with no binary. Omitting `metadata.kind` defaults to `prompt`.
 
@@ -30,9 +29,8 @@ just t           # test
 just p           # push branch + open draft PR (-r marks ready, waits, squash-merges)
 ```
 
-## GitHub apps
+## GitHub reviews
 
-Three apps must be installed on the repo for the workflows to work end-to-end:
+The org gate requires `ci` and `bot-review-complete` for the current PR head. The shared bot gate accepts clean reviews from both bots, or one clean review when the other explicitly reports a quota limit. Unresolved findings from either bot block the gate.
 
-- [Claude Code](https://github.com/apps/claude) — powers PR review, draft-PR summary, and `@claude` mentions.
-- GitHub Copilot — second AI reviewer, enabled in repo settings.
+Enable automatic Copilot reviews through the org ruleset and [Codex Code Review](https://learn.chatgpt.com/docs/third-party/github) for all PRs and new pushes in Codex settings.
