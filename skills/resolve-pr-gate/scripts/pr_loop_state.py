@@ -19,8 +19,8 @@ from typing import Literal, Never, TypeIs, cast
 from urllib.parse import urlparse
 
 CI_CHECK_NAME = "ci"
-COPILOT_REVIEW_CHECK_NAME = "copilot-pull-request-reviewer"
-COPILOT_REVIEW_STATUS_CONTEXT = "copilot-review-complete"
+BOT_REVIEW_STATUS_CONTEXT = "bot-review-complete"
+REVIEW_BOT_LOGINS = {"copilot", "copilot-pull-request-reviewer", "chatgpt-codex-connector"}
 GH_COMMAND = "gh"
 GIT_COMMAND = "git"
 NO_PR_ERRORS = (
@@ -34,10 +34,11 @@ SNAPSHOT_ATTEMPTS = 2
 type GateState = Literal["action", "green", "running", "terminated"]
 
 THREADS_QUERY = """
-query($owner:String!,$name:String!,$number:Int!){
+query($owner:String!,$name:String!,$number:Int!,$endCursor:String){
   repository(owner:$owner,name:$name){
     pullRequest(number:$number){
-      reviewThreads(first:100){
+      reviewThreads(first:100,after:$endCursor){
+        pageInfo{hasNextPage endCursor}
         nodes{
           id isResolved path startLine line
           comments(first:100){
@@ -97,14 +98,6 @@ class PRCheck:
 
 
 @dataclass(frozen=True, slots=True)
-class CopilotReviewCheck:
-    conclusion: str | None
-    details_url: str | None
-    name: str
-    status: str
-
-
-@dataclass(frozen=True, slots=True)
 class CommitStatus:
     context: str
     description: str | None
@@ -124,11 +117,9 @@ class GateSnapshot:
     pr_checks: list[PRCheck]
     ci_check: PRCheck | None
     ci_state: GateState
-    copilot_review_check: CopilotReviewCheck | None
-    copilot_review_check_state: GateState
-    copilot_review_status: CommitStatus | None
-    copilot_review_status_state: GateState
-    copilot_threads: list[ReviewThread]
+    bot_review_status: CommitStatus | None
+    bot_review_state: GateState
+    bot_threads: list[ReviewThread]
 
 
 def raise_command_error(
@@ -208,15 +199,6 @@ def parse_pr_check(payload: JsonObject) -> PRCheck:
         name=cast("str", payload["name"]),
         state=cast("str", payload["state"]),
         workflow=cast("str", payload["workflow"]),
-    )
-
-
-def parse_copilot_review_check(payload: JsonObject) -> CopilotReviewCheck:
-    return CopilotReviewCheck(
-        conclusion=cast("str | None", payload["conclusion"]),
-        details_url=cast("str | None", payload["details_url"]),
-        name=cast("str", payload["name"]),
-        status=cast("str", payload["status"]),
     )
 
 
@@ -305,29 +287,20 @@ def find_ci_check(pr_checks: list[PRCheck]) -> PRCheck | None:
     )
 
 
-def fetch_copilot_review_check(
-    owner: str,
-    repo: str,
-    sha: str,
-) -> CopilotReviewCheck | None:
-    endpoint = f"repos/{owner}/{repo}/commits/{sha}/check-runs?check_name={COPILOT_REVIEW_CHECK_NAME}&per_page=100"
-    response = cast_json_object(load_gh_json(["api", endpoint]))
-    checks = [parse_copilot_review_check(check) for check in cast_json_objects(response["check_runs"])]
-    return next(
-        (check for check in checks if check.name == COPILOT_REVIEW_CHECK_NAME),
-        None,
-    )
-
-
-def fetch_copilot_review_status(
+def fetch_bot_review_status(
     owner: str,
     repo: str,
     sha: str,
 ) -> CommitStatus | None:
-    response = load_gh_json(["api", f"repos/{owner}/{repo}/commits/{sha}/statuses?per_page=100"])
-    statuses = [parse_commit_status(status) for status in cast_json_objects(response)]
+    response = load_gh_json([
+        "api",
+        f"repos/{owner}/{repo}/commits/{sha}/statuses?per_page=100",
+        "--paginate",
+        "--slurp",
+    ])
+    statuses = [parse_commit_status(status) for page in cast("list[list[JsonObject]]", response) for status in page]
     return next(
-        (status for status in statuses if status.context == COPILOT_REVIEW_STATUS_CONTEXT),
+        (status for status in statuses if status.context == BOT_REVIEW_STATUS_CONTEXT),
         None,
     )
 
@@ -365,15 +338,17 @@ def inspect_branch_position(pr_head_oid: str) -> BranchPosition | None:
     return BranchPosition(ahead=ahead, behind=behind, local_head_oid=local_head_oid)
 
 
-def is_copilot_comment(comment: ReviewComment) -> bool:
-    return comment.author_login is not None and "copilot" in comment.author_login.casefold()
+def is_bot_comment(comment: ReviewComment) -> bool:
+    return (comment.author_login or "").removesuffix("[bot]").casefold() in REVIEW_BOT_LOGINS
 
 
-def fetch_unresolved_copilot_threads(owner: str, repo: str, pr_number: int) -> list[ReviewThread]:
-    response = cast_json_object(
+def fetch_unresolved_bot_threads(owner: str, repo: str, pr_number: int) -> list[ReviewThread]:
+    responses = cast_json_objects(
         load_gh_json([
             "api",
             "graphql",
+            "--paginate",
+            "--slurp",
             "-F",
             f"owner={owner}",
             "-F",
@@ -384,16 +359,17 @@ def fetch_unresolved_copilot_threads(owner: str, repo: str, pr_number: int) -> l
             f"query={THREADS_QUERY}",
         ])
     )
-    data = cast_json_object(response["data"])
-    repository = cast_json_object(data["repository"])
-    pull_request = cast_json_object(repository["pullRequest"])
-    connection = cast_json_object(pull_request["reviewThreads"])
-    copilot_threads: list[ReviewThread] = []
-    for payload in cast_json_objects(connection["nodes"]):
-        thread = parse_review_thread(payload)
-        if not thread.is_resolved and thread.comments and is_copilot_comment(thread.comments[0]):
-            copilot_threads.append(thread)
-    return copilot_threads
+    threads: list[ReviewThread] = []
+    for response in responses:
+        data = cast_json_object(response["data"])
+        repository = cast_json_object(data["repository"])
+        pull_request = cast_json_object(repository["pullRequest"])
+        connection = cast_json_object(pull_request["reviewThreads"])
+        for payload in cast_json_objects(connection["nodes"]):
+            thread = parse_review_thread(payload)
+            if not thread.is_resolved and thread.comments and is_bot_comment(thread.comments[0]):
+                threads.append(thread)
+    return threads
 
 
 def format_timestamp() -> str:
@@ -416,23 +392,10 @@ def format_ci_check_state(ci_check: PRCheck | None) -> str:
     return f"{CI_CHECK_NAME}={ci_check.bucket}"
 
 
-def format_copilot_review_check_state(
-    copilot_review_check: CopilotReviewCheck | None,
-) -> str:
-    if copilot_review_check is None:
-        return f"{COPILOT_REVIEW_CHECK_NAME}=missing"
-    status = copilot_review_check.status
-    conclusion = copilot_review_check.conclusion
-    suffix = f"/{conclusion}" if conclusion else ""
-    return f"{COPILOT_REVIEW_CHECK_NAME}={status}{suffix}"
-
-
-def format_copilot_review_status_state(
-    copilot_review_status: CommitStatus | None,
-) -> str:
-    if copilot_review_status is None:
-        return f"{COPILOT_REVIEW_STATUS_CONTEXT}=missing"
-    return f"{COPILOT_REVIEW_STATUS_CONTEXT}={copilot_review_status.state}"
+def format_bot_review_status_state(status: CommitStatus | None) -> str:
+    state = status.state if status is not None else "missing"
+    description = f" ({status.description})" if status is not None and status.description else ""
+    return f"{BOT_REVIEW_STATUS_CONTEXT}={state}{description}"
 
 
 def assess_ci_check(ci_check: PRCheck | None) -> GateState:
@@ -445,37 +408,12 @@ def assess_ci_check(ci_check: PRCheck | None) -> GateState:
     return "terminated"
 
 
-def assess_copilot_review_check(
-    copilot_review_check: CopilotReviewCheck | None,
-    copilot_review_status: CommitStatus | None,
-) -> GateState:
-    status_state = copilot_review_status.state if copilot_review_status is not None else None
-    if copilot_review_check is None:
-        if status_state == "failure":
-            return "action"
-        if status_state in {"error", "success"}:
-            return "terminated"
+def assess_bot_review_status(status: CommitStatus | None) -> GateState:
+    if status is None or status.state == "pending":
         return "running"
-    if copilot_review_check.status != "completed":
-        return "running"
-    if copilot_review_check.conclusion == "success":
+    if status.state == "success":
         return "green"
-    return "terminated"
-
-
-def assess_copilot_review_status(
-    copilot_review_check: CopilotReviewCheck | None,
-    copilot_review_status: CommitStatus | None,
-) -> GateState:
-    if copilot_review_status is None or copilot_review_status.state == "pending":
-        return "running"
-    if copilot_review_status.state == "success":
-        return "green"
-    if copilot_review_status.state != "failure":
-        return "terminated"
-    if copilot_review_check is None or copilot_review_check.status != "completed":
-        return "action"
-    if copilot_review_check.conclusion == "success":
+    if status.state in {"failure", "error"}:
         return "action"
     return "terminated"
 
@@ -483,34 +421,14 @@ def assess_copilot_review_status(
 def fetch_gate_snapshot(owner: str, repo: str, pr: PullRequest) -> GateSnapshot:
     pr_checks = fetch_pr_checks(owner, repo, pr.number)
     ci_check = find_ci_check(pr_checks)
-    copilot_review_check = fetch_copilot_review_check(owner, repo, pr.head_oid)
-    copilot_review_status = fetch_copilot_review_status(owner, repo, pr.head_oid)
-    ci_state = assess_ci_check(ci_check)
-    copilot_review_check_state = assess_copilot_review_check(
-        copilot_review_check,
-        copilot_review_status,
-    )
-    copilot_review_status_state = assess_copilot_review_status(
-        copilot_review_check,
-        copilot_review_status,
-    )
-    gate_states = (
-        ci_state,
-        copilot_review_check_state,
-        copilot_review_status_state,
-    )
-    copilot_threads: list[ReviewThread] = []
-    if "running" not in gate_states and "terminated" not in gate_states and copilot_review_check_state == "green":
-        copilot_threads = fetch_unresolved_copilot_threads(owner, repo, pr.number)
+    bot_review_status = fetch_bot_review_status(owner, repo, pr.head_oid)
     return GateSnapshot(
         pr_checks=pr_checks,
         ci_check=ci_check,
-        ci_state=ci_state,
-        copilot_review_check=copilot_review_check,
-        copilot_review_check_state=copilot_review_check_state,
-        copilot_review_status=copilot_review_status,
-        copilot_review_status_state=copilot_review_status_state,
-        copilot_threads=copilot_threads,
+        ci_state="action" if list_failed_ci_checks(pr_checks) else assess_ci_check(ci_check),
+        bot_review_status=bot_review_status,
+        bot_review_state=assess_bot_review_status(bot_review_status),
+        bot_threads=fetch_unresolved_bot_threads(owner, repo, pr.number),
     )
 
 
@@ -527,8 +445,7 @@ def list_failed_ci_checks(pr_checks: list[PRCheck]) -> list[PRCheck]:
     return [
         check
         for check in pr_checks
-        if check.bucket == "fail"
-        and check.name.casefold() not in {COPILOT_REVIEW_CHECK_NAME, COPILOT_REVIEW_STATUS_CONTEXT}
+        if check.bucket == "fail" and (check.name.casefold() == CI_CHECK_NAME or check.workflow in {"ci", "org_gate"})
     ]
 
 
@@ -543,8 +460,8 @@ def print_ci_failures(failed_ci_checks: list[PRCheck], pr_url: str) -> None:
         write_line(f"URL: {check.link or pr_url + '/checks'}")
 
 
-def print_copilot_threads(threads: list[ReviewThread]) -> None:
-    write_line(f"UNRESOLVED COPILOT THREADS ({len(threads)})")
+def print_bot_threads(threads: list[ReviewThread]) -> None:
+    write_line(f"UNRESOLVED BOT THREADS ({len(threads)})")
     for thread_index, thread in enumerate(threads, start=1):
         write_line()
         write_line(f"[{thread_index}/{len(threads)}] {format_thread_location(thread)}")
@@ -561,65 +478,65 @@ def print_copilot_threads(threads: list[ReviewThread]) -> None:
             write_line(f"----- END COMMENT {comment_index}/{len(comments)} -----")
 
 
-def print_copilot_review_action(
-    copilot_review_check: CopilotReviewCheck | None,
-    copilot_review_status: CommitStatus,
-    pr_url: str,
-) -> None:
-    write_line("COPILOT REVIEW ACTION")
-    write_line(f"Status: {COPILOT_REVIEW_STATUS_CONTEXT}={copilot_review_status.state}")
-    description = copilot_review_status.description
-    if description:
-        write_line(f"Description: {description}")
-    check_url = copilot_review_check.details_url if copilot_review_check is not None else None
-    write_line("URL: " + (copilot_review_status.target_url or check_url or pr_url + "/checks"))
+def print_bot_review_action(status: CommitStatus, pr_url: str) -> None:
+    write_line("BOT REVIEW ACTION")
+    write_line(f"Status: {BOT_REVIEW_STATUS_CONTEXT}={status.state}")
+    if status.description:
+        write_line(f"Description: {status.description}")
+    write_line("URL: " + (status.target_url or pr_url + "/checks"))
 
 
 def print_next_action(
+    pr: PullRequest,
     *,
     has_ci_failures: bool,
-    has_copilot_threads: bool,
-    has_copilot_review_action: bool,
+    has_bot_threads: bool,
+    has_bot_review_action: bool,
 ) -> None:
     actions: list[str] = []
     if has_ci_failures:
         actions.append("Fix every listed CI failure.")
-    if has_copilot_threads:
+    if has_bot_threads:
         actions.append(
             "Inspect every listed thread against the current code. Fix valid findings; "
             "explain why invalid findings should not be applied; resolve every addressed thread."
         )
-    if has_copilot_review_action:
-        actions.append(f"Follow the {COPILOT_REVIEW_STATUS_CONTEXT} instruction above.")
+    if has_bot_review_action:
+        actions.append(
+            "Inspect the gate description and linked workflow. Fix actionable failures; "
+            "stop and report unavailable reviewers or access/configuration errors."
+        )
+    owner, repo = parse_pr_repo(pr.url)
     actions.extend([
-        "Run just c until the full gate passes.",
-        "Commit all resulting changes, if any.",
-        "Run just pr to push and retrigger Copilot review.",
-        "Wait 3 minutes, then rerun this script.",
+        (
+            "If fixes change files or commits are unpushed, run just c until it passes, commit resulting changes, "
+            "then run just pr to push and request review. Reuse a passing check when HEAD is unchanged."
+        ),
+        (
+            "After resolving threads without a push, refresh the verdict: "
+            f"gh workflow run org_gate.yml --repo {owner}/{repo} -f pr={pr.number}."
+        ),
+        "Wait 60 seconds, then rerun this script.",
     ])
     write_line("NEXT ACTION")
     for index, action in enumerate(actions, start=1):
         write_line(f"{index}. {action}")
 
 
-def print_report(
-    snapshot: GateSnapshot,
-    pr_url: str,
-    ahead: int,
-) -> None:
+def print_report(snapshot: GateSnapshot, pr: PullRequest, ahead: int) -> None:
     failed_ci_checks = list_failed_ci_checks(snapshot.pr_checks)
-    has_copilot_review_action = (
-        snapshot.copilot_review_status is not None
-        and snapshot.copilot_review_status.state == "failure"
-        and not snapshot.copilot_threads
+    has_bot_review_action = (
+        snapshot.bot_review_status is not None
+        and snapshot.bot_review_status.state in {"failure", "error"}
+        and not snapshot.bot_threads
     )
     counts: list[str] = []
     if failed_ci_checks:
         counts.append(format_count(len(failed_ci_checks), "CI failure"))
-    if snapshot.copilot_threads:
-        counts.append(format_count(len(snapshot.copilot_threads), "unresolved Copilot thread"))
-    if has_copilot_review_action:
-        counts.append(f"{COPILOT_REVIEW_STATUS_CONTEXT} action")
+    if snapshot.bot_threads:
+        counts.append(format_count(len(snapshot.bot_threads), "unresolved bot thread"))
+    if has_bot_review_action:
+        counts.append(f"{BOT_REVIEW_STATUS_CONTEXT} action")
     if ahead:
         counts.append(format_count(ahead, "unpushed commit"))
     if not counts:
@@ -627,22 +544,19 @@ def print_report(
     print_step(40, "action required - " + ", ".join(counts))
     write_line()
     if failed_ci_checks:
-        print_ci_failures(failed_ci_checks, pr_url)
+        print_ci_failures(failed_ci_checks, pr.url)
         write_line()
-    if snapshot.copilot_threads:
-        print_copilot_threads(snapshot.copilot_threads)
+    if snapshot.bot_threads:
+        print_bot_threads(snapshot.bot_threads)
         write_line()
-    if has_copilot_review_action and snapshot.copilot_review_status is not None:
-        print_copilot_review_action(
-            snapshot.copilot_review_check,
-            snapshot.copilot_review_status,
-            pr_url,
-        )
+    if has_bot_review_action and snapshot.bot_review_status is not None:
+        print_bot_review_action(snapshot.bot_review_status, pr.url)
         write_line()
     print_next_action(
+        pr,
         has_ci_failures=bool(failed_ci_checks),
-        has_copilot_threads=bool(snapshot.copilot_threads),
-        has_copilot_review_action=has_copilot_review_action,
+        has_bot_threads=bool(snapshot.bot_threads),
+        has_bot_review_action=has_bot_review_action,
     )
 
 
@@ -699,48 +613,29 @@ def print_unsafe_branch(
     )
 
 
-def format_gate_state(
-    snapshot: GateSnapshot,
-) -> str:
+def format_gate_state(snapshot: GateSnapshot) -> str:
     return "; ".join([
         format_ci_check_state(snapshot.ci_check),
-        format_copilot_review_check_state(snapshot.copilot_review_check),
-        format_copilot_review_status_state(snapshot.copilot_review_status),
+        format_bot_review_status_state(snapshot.bot_review_status),
     ])
 
 
-def list_gate_states(snapshot: GateSnapshot) -> tuple[GateState, GateState, GateState]:
-    return (
-        snapshot.ci_state,
-        snapshot.copilot_review_check_state,
-        snapshot.copilot_review_status_state,
-    )
+def list_gate_states(snapshot: GateSnapshot) -> tuple[GateState, GateState]:
+    return snapshot.ci_state, snapshot.bot_review_state
 
 
 def list_terminated_gates(snapshot: GateSnapshot) -> list[str]:
     gates = [
         (snapshot.ci_state, format_ci_check_state(snapshot.ci_check)),
-        (
-            snapshot.copilot_review_check_state,
-            format_copilot_review_check_state(snapshot.copilot_review_check),
-        ),
-        (
-            snapshot.copilot_review_status_state,
-            format_copilot_review_status_state(snapshot.copilot_review_status),
-        ),
+        (snapshot.bot_review_state, format_bot_review_status_state(snapshot.bot_review_status)),
     ]
     return [summary for state, summary in gates if state == "terminated"]
 
 
-def print_gate_recommendation(
-    snapshot: GateSnapshot,
-    pr: PullRequest,
-    branch_position: BranchPosition,
-) -> None:
+def print_gate_recommendation(snapshot: GateSnapshot, pr: PullRequest, branch_position: BranchPosition) -> None:
     print_open_pr(pr)
     print_step(20, format_branch_position(branch_position))
     print_step(30, format_gate_state(snapshot))
-
     terminated_gates = list_terminated_gates(snapshot)
     if terminated_gates:
         print_step(
@@ -748,21 +643,20 @@ def print_gate_recommendation(
             "STOP - gate terminated without success: " + "; ".join(terminated_gates) + "; inform the user",
         )
         return
-
     gate_states = list_gate_states(snapshot)
+    if "action" in gate_states or snapshot.bot_threads or branch_position.ahead:
+        print_report(snapshot, pr, branch_position.ahead)
+        return
+    if pr.is_draft:
+        print_step(40, f"PR is draft; mark ready with gh pr ready {pr.url}, then rerun this script")
+        return
     if "running" in gate_states:
         print_step(
             50,
-            "wait for every running gate to finish; set a 60-second wake-up, then rerun "
-            "this script for a fresh recommendation",
+            "wait for the pending gates; set a 60-second wake-up, then rerun this script for a fresh recommendation",
         )
         return
-
-    if all(state == "green" for state in gate_states) and not snapshot.copilot_threads and branch_position.ahead == 0:
-        print_step(100, "STOP - all three gates are green; nothing to do")
-        return
-
-    print_report(snapshot, pr.url, branch_position.ahead)
+    print_step(100, "STOP - ci and bot-review-complete are green; no unresolved bot threads; nothing to do")
 
 
 def print_pr_loop_state() -> None:
@@ -791,7 +685,13 @@ def print_pr_loop_state() -> None:
         snapshot = fetch_gate_snapshot(owner, repo, pr)
 
         confirmed_pr = find_current_pr()
-        if confirmed_pr is None or confirmed_pr.number != pr.number or confirmed_pr.head_oid != pr.head_oid:
+        if (
+            confirmed_pr is None
+            or confirmed_pr.number != pr.number
+            or confirmed_pr.head_oid != pr.head_oid
+            or confirmed_pr.state != pr.state
+            or confirmed_pr.is_draft != pr.is_draft
+        ):
             continue
         if not is_working_tree_clean():
             print_dirty_working_tree(confirmed_pr)
@@ -814,9 +714,7 @@ def print_pr_loop_state() -> None:
 
 def parse_args() -> None:
     parser = argparse.ArgumentParser(
-        description=(
-            "Inspect the current branch's PR gates and unresolved Copilot threads, then direct the review loop."
-        )
+        description=("Inspect CI, the aggregate bot gate, and unresolved bot threads for the current branch's PR.")
     )
     parser.parse_args()
 
