@@ -651,15 +651,6 @@ wheels = [
 ]
 
 [[package]]
-name = "types-pyyaml"
-version = "6.0.12.20260906"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/90/6e/abec85b9013db5b934b0280a6dd104904d84f7bcbaab2e2f3def87ac7463/types_pyyaml-6.0.12.20260906.tar.gz", hash = "sha256:f59c1cc05010b833d2d72287bbaa72610106b28d42d89a907313117faba85212", size = 18649, upload-time = "2026-09-06T06:35:35.362Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/15/c0/fc0644b7ddcfb969e95845837143cb5173ddd6e06ee4ba5fc493cd9329b7/types_pyyaml-6.0.12.20260906-py3-none-any.whl", hash = "sha256:bca893ff0d51df5c9053137d5d0e6ccd36e939a196356f1d5c16372422f5137b", size = 21282, upload-time = "2026-09-06T06:35:34.372Z" },
-]
-
-[[package]]
 name = "typing-extensions"
 version = "4.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -701,7 +692,6 @@ test = [
     { name = "markdownify" },
     { name = "pytest" },
     { name = "pytest-cov" },
-    { name = "pyyaml" },
     { name = "skills-ref" },
     { name = "toon-format" },
     { name = "typer" },
@@ -714,11 +704,9 @@ typecheck = [
     { name = "markdownify" },
     { name = "pyrefly" },
     { name = "pytest" },
-    { name = "pyyaml" },
     { name = "skills-ref" },
     { name = "toon-format" },
     { name = "typer" },
-    { name = "types-pyyaml" },
 ]
 
 [package.metadata]
@@ -742,7 +730,6 @@ test = [
     { name = "markdownify", specifier = ">=1.2.3" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
-    { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "skills-ref", specifier = ">=0.1.1" },
     { name = "toon-format", specifier = ">=1.1.0" },
     { name = "typer", specifier = ">=0.27.3" },
@@ -755,16 +742,14 @@ typecheck = [
     { name = "markdownify", specifier = ">=1.2.3" },
     { name = "pyrefly", specifier = ">=1.3.2" },
     { name = "pytest", specifier = ">=9.1.1" },
-    { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "skills-ref", specifier = ">=0.1.1" },
     { name = "toon-format", specifier = ">=1.1.0" },
     { name = "typer", specifier = ">=0.27.3" },
-    { name = "types-pyyaml", specifier = ">=6.0.12.20260906" },
 ]
 
 [[package]]
 name = "zyplux-cerberus"
-version = "0.22.2"
+version = "0.23.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "networkx" },
@@ -776,7 +761,7 @@ dependencies = [
     { name = "tree-sitter-typescript" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1f/5c/1dd5cc8edf22eb7b8ef841f84bf753756638a2a302c3152936bb4c1fa79e/zyplux_cerberus-0.22.2.tar.gz", hash = "sha256:67a12f2c942c5b8b1d3d903ca61500edb50d15f0a896a9cbaefadd5d2d4a45f5", size = 74962, upload-time = "2026-10-18T18:36:55.9Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/86/72bf43838f3e36e4f9f2e01adf0e42b4e67cfb1a5dc7b1a86e9f83ce8b05/zyplux_cerberus-0.23.1.tar.gz", hash = "sha256:d6eca50d864b1df9b9d2267fd2d65336ed8484f20eb2c80bc67d307fd8a8a31b", size = 76468, upload-time = "2026-10-19T21:02:01.657Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cb/9f/e139cf1040db84e0b9da051cb062e8c56ba1ffd3ca9e714ba28bb8ce97a4/zyplux_cerberus-0.22.2-py3-none-any.whl", hash = "sha256:23f14f83f5d8706fda86073098b75ff6905909ef3059ff70b9d360e2eccdd3bf", size = 104093, upload-time = "2026-10-18T18:36:54.829Z" },
+    { url = "https://files.pythonhosted.org/packages/51/c9/1642e9ef6eea343d94f885c20d7714c69e128b5bc96d4aeb3f3a85db48ee/zyplux_cerberus-0.23.1-py3-none-any.whl", hash = "sha256:9138d001639008c8c05fe68be6bd4ba18b22f0417798afeccef43bd31475b669", size = 105648, upload-time = "2026-10-19T21:02:00.194Z" },
 ]

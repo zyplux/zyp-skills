@@ -3,8 +3,8 @@ name: mermaid
 description: Generate Mermaid diagrams for markdown — flowcharts, sequence diagrams, state machines, ER diagrams, architectures, Gantt, Sankey, mindmaps, and 20+ other types. Use whenever the user asks to draw, sketch, visualize, diagram, chart, or graph anything that ends up in markdown (README, design doc, code comment, PR/issue, wiki) — even when 'mermaid' is not mentioned. Trigger on 'draw/show the flow/architecture/state/sequence/relationship', 'add a flowchart/sequence diagram', 'diagram how X works', 'graph the schema', or any time the user shows an existing mermaid block to extend or fix. Picking the right diagram type for the question matters more than syntax fluency — the skill carries a curated selection guide and per-type syntax references. Do NOT use for production charts from real data (matplotlib, plotly, d3), formal architecture-of-record modelling, or when the user wants a static image rather than markdown — Mermaid is for explanation that lives next to prose.
 metadata:
   kind: prompt
-  version: "0.17.2"
-  mermaid-version: "11.17.2"
+  version: "1.2.0"
+  mermaid-version: "12.2.0"
 ---
 
 # mermaid
@@ -13,7 +13,7 @@ Diagrams that live next to prose in markdown. Mermaid is a text-based diagram la
 
 The single most important decision when making a Mermaid diagram is **which diagram type to use**. Picking wrong produces a diagram that is syntactically perfect but answers a question no one asked. Picking right means even a clumsy diagram communicates.
 
-This skill carries a curated **selection guide** (31 diagram types — when each is right, when to avoid it, how to tiebreak) and **per-diagram syntax references** sourced from the official Mermaid docs. Use them — Mermaid syntax shifts faster than memory, and the cost of one extra file read is far less than the cost of a hallucinated arrow type.
+This skill carries a curated **selection guide** (33 diagram types — when each is right, when to avoid it, how to tiebreak) and **per-diagram syntax references** sourced from the official Mermaid docs. Use them — Mermaid syntax shifts faster than memory, and the cost of one extra file read is far less than the cost of a hallucinated arrow type.
 
 ---
 
@@ -72,7 +72,9 @@ Each row also lists the **Avoid-when** signal — the failure mode where a diffe
 |---|---|---|
 | A process with branches/decisions, optionally hiding detail | **Flowchart** | strictly linear (a list is shorter); actors/systems matter more than steps — use Sequence |
 | Who calls whom, and in what order | **Sequence diagram** | only one actor (Flowchart is shorter); the conversation is OOP-call-shaped (nested invocations with returns) — use ZenUML |
-| A process across teams/systems, with ownership per step | **Swimlanes** *(new, syntax may evolve)* | ownership doesn't matter — use Flowchart; call ordering between two actors matters more than lanes — use Sequence |
+| Actors and the goals they achieve within a system boundary | **Use case** *(beta)* | step ordering matters — use Flowchart or Sequence; user sentiment matters — use User journey |
+| Agents, their tasks and tools, and control or data contracts | **Agentflow** *(beta)* | agent/tool semantics add nothing — use Flowchart; message ordering is the point — use Sequence |
+| A process across teams/systems, with ownership per step | **Swimlanes** *(beta)* | ownership doesn't matter — use Flowchart; call ordering between two actors matters more than lanes — use Sequence |
 | OOP-call-shaped conversation (nested invocations, returns, try/catch) | **ZenUML** *(experimental)* | async messages with no clear caller/callee, or activations/notes/fragments matter — use Sequence |
 | How information flows over time across UI / commands / events / read models | **Event modeling** *(experimental)* | the system isn't actually event-driven, or you only need a request/response trace — use Sequence |
 | User-facing steps with sentiment | **User journey** | audience is engineers debugging — they want a Flowchart or Sequence, not feelings |
@@ -87,7 +89,7 @@ Each row also lists the **Avoid-when** signal — the failure mode where a diffe
 | Project schedule with dependencies | **Gantt** | milestones with no durations/dependencies — use Timeline; sprint tracking — use Kanban or a burndown |
 | Ordered events without durations | **Timeline** | you need overlap, slippage, or critical path — use Gantt |
 | Branching/merging git history | **Gitgraph** | you want project status — a real git client or Kanban communicates more |
-| Open hierarchical decomposition / brainstorm | **Mindmap** | leaf sizes matter (Treemap); directory-shaped (TreeView); branches converge on one problem (Ishikawa); structure is cyclic/networked (Flowchart) |
+| Open hierarchical decomposition / brainstorm, optionally colored by depth | **Mindmap** | leaf sizes matter (Treemap); directory-shaped (TreeView); branches converge on one problem (Ishikawa); structure is cyclic/networked (Flowchart) |
 | Hierarchy where leaf size matters | **Treemap** *(beta)* | sizes roughly equal or absent (Mindmap); not hierarchical (XY bar); values can be negative (Treemap can't represent them) |
 | Directory-style hierarchy | **TreeView** *(beta)* | not tree-shaped — use Mindmap or Flowchart; sizes matter — use Treemap |
 | Root causes of a problem | **Ishikawa** *(beta)* (fishbone) | open-ended brainstorm — use Mindmap; relationships aren't cause→effect — use Flowchart |
@@ -97,7 +99,7 @@ Each row also lists the **Avoid-when** signal — the failure mode where a diffe
 | Multivariate comparison across the same axes | **Radar** *(beta)* | axes aren't comparable in scale, or more than ~3 items overlaid — becomes unreadable |
 | 2x2 categorisation with author-named axes | **Quadrant** | one of the axes is fake (quadrants force two real dimensions); axes are specifically visibility × evolution — use Wardley |
 | Strategic position (visibility × evolution) | **Wardley map** *(beta)* | your axes aren't visibility/evolution — use Quadrant. Note: OWM coordinate format is `[visibility, evolution]`, not `(x, y)` |
-| Bit-level wire format | **Packet** | you're not describing a bit-precise structure — a table is shorter and easier to maintain |
+| Bit-level wire format or hardware register | **Packet** | you're not describing a bit-precise structure — a table is shorter and easier to maintain |
 | Work-in-progress task board | **Kanban** | audience needs durations/dependencies — use Gantt; a screenshot of the actual board may be more honest |
 | Grammar/syntax rules of a language | **Railroad diagram** *(beta)* | the grammar is trivial (a sentence or table communicates it faster) |
 | Which decision-making approach fits a problem's complexity | **Cynefin** *(new)* | you need a general 2x2 — use Quadrant; you're mapping a process, not classifying a problem |
@@ -109,6 +111,8 @@ When two diagrams seem to fit, this table picks the winner.
 | Choice | Pick the first when... | Pick the second when... |
 |---|---|---|
 | Flowchart vs Sequence | one actor with decisions/branches | multiple actors and message ordering is the point |
+| Use case vs Sequence | actors and system capabilities are the point | call ordering is the point |
+| Agentflow vs Flowchart | agents, tools, reference material and contracts carry meaning | general process steps and decisions are enough |
 | Sequence vs ZenUML | participants exchange messages; lanes/notes/activations matter | the conversation is OOP-call-shaped (nested calls, returns, try/catch) |
 | Swimlanes vs Sequence | ownership/handoff between teams or systems is the point | call ordering between two actors is the point |
 | Swimlanes vs Flowchart | not only "what happens next?" matters but also "who owns this step?" | steps and branching matter more than who owns them |
@@ -131,10 +135,12 @@ When two diagrams seem to fit, this table picks the winner.
 
 Mermaid syntax has many quirks: escaping rules, edge ordering, node-shape keywords that change between versions, and several diagram types still flagged beta or experimental whose syntax shifts. Even when you think you know the syntax, **read the reference for the chosen type before writing** — it is sourced directly from the Mermaid project's docs and is the authoritative source of truth.
 
-The references in this skill target **Mermaid 11.17.2** (pinned in `metadata.mermaid-version` in the frontmatter — bump both on upgrade). If the renderer is on a different version, beta/experimental syntax may have shifted; verify against the reference and the live renderer.
+The references in this skill target **Mermaid 12.2.0** (pinned in `metadata.mermaid-version` in the frontmatter — bump both on upgrade). Check the destination renderer's version before using a newer feature, especially `usecase-beta` and `agentflow-beta`, which require Mermaid 12. For beta/experimental types, verify the syntax against the reference and the live renderer.
 
 - [Flowchart](references/syntax/flowchart.md)
 - [Sequence diagram](references/syntax/sequenceDiagram.md)
+- [Use case](references/syntax/usecase.md)
+- [Agentflow](references/syntax/agentflow.md)
 - [ZenUML](references/syntax/zenuml.md)
 - [Event modeling](references/syntax/eventmodeling.md)
 - [User journey](references/syntax/userJourney.md)
@@ -190,6 +196,33 @@ sequenceDiagram
     U->>A: GET /resource
     A-->>U: 200 OK + payload
 ```
+
+#### Use case
+
+```mermaid
+usecase-beta
+direction LR
+actor Customer
+systemBoundary Storefront
+    Checkout("Place order")
+end
+Customer --> Checkout
+```
+
+Use explicit actor declarations and put each statement on its own line. Use cases describe goals within a system boundary; use `include`, `extend`, and generalization relationships only when their UML meaning fits.
+
+#### Agentflow
+
+```mermaid
+agentflow-beta LR
+    flow Reviewer["Review Agent"]
+        Inspect["Inspect changes"]@{ shape: task }
+        Lint["run_linter"]@{ shape: tool }
+        Inspect --> Lint
+    end
+```
+
+Group agent work with `flow … end`. Use `-->` for control/data flow, `-.-` for consulted references, and `--x` for failure paths. Metadata can record models, instructions, tool contracts and connector bindings; read the reference before adding it.
 
 #### State diagram
 
@@ -252,7 +285,7 @@ Distilled from the selection guide. Apply these when the table feels ambiguous.
 3. **Time vs ordering vs neither.** Calendar time → Gantt/timeline. Logical ordering (step 1, step 2) → flowchart/sequence. Event-time across swimlanes → event modeling. Neither → structural diagrams (class, ER, C4, block).
 4. **If the diagram needs a long explanatory legend to decode its notation, it's the wrong diagram** — split it, or pick a different type. Standard data-series legends are not a warning sign.
 5. **Mermaid is for explanation, not analysis.** When data quality and precision matter (real charts, real schemas, real architecture-of-record), a dedicated tool will serve better. Mermaid wins when the diagram lives next to prose in markdown.
-6. **Beta means beta.** Several types are still in beta (`architecture-beta`, `treemap-beta`, `treeView-beta`, `ishikawa-beta`, `venn-beta`, `wardley-beta`, `radar-beta`, `railroad-*-beta`), Swimlanes is brand-new with syntax that may still evolve, and some are experimental (C4, ZenUML, event modeling). Their syntax may shift between Mermaid versions. Pin a known version when it matters and re-test on upgrade.
+6. **Beta means beta.** Several types are still in beta (`agentflow-beta`, `usecase-beta`, `swimlane-beta`, `architecture-beta`, `treemap-beta`, `treeView-beta`, `ishikawa-beta`, `venn-beta`, `wardley-beta`, `radar-beta`, `railroad-*-beta`), and some are experimental (C4, ZenUML, event modeling). Their syntax may shift between Mermaid versions. Pin a known version when it matters and re-test on upgrade.
 
 ---
 
@@ -263,6 +296,10 @@ Distilled from the selection guide. Apply these when the table feels ambiguous.
 - **Labels: special chars and length.** Wrap labels containing parentheses, colons, or square brackets in `"..."`. Use `<br/>` to force line breaks in long labels — *especially edge labels*, which renderers otherwise auto-wrap at unfortunate boundaries. HTML entities (`#quot;`, `#35;`) work for the trickiest characters.
 - **Overlong diagrams.** A flowchart with 40 visible nodes is a debugging session, not a diagram. Collapse subgraphs whose internals are optional, or break it into a top-level overview plus zoomed-in subdiagrams.
 - **Configuration syntax.** Put configuration in YAML frontmatter inside the Mermaid block. Do not reach for the legacy `%%{init: ...}%%` directive when frontmatter expresses the same setting.
+- **Layout and appearance.** Mermaid 12 bundles ELK as its default layout. Flowchart, class, ER, state, requirement, sequence, swimlane, Venn, use case and agentflow diagrams default to `theme: redux-color` and `look: neo`. Set `layout`, `theme`, and `look` explicitly when placement or appearance must be predictable; use the top-level `layout` setting to select an algorithm.
+- **Mindmap colors.** Set `config.mindmap.colorBy: depth` to color hierarchy levels across branches; `branch` is the default. With the `neo` look, some themes paint uniform backgrounds; read the reference before customizing the depth palette.
+- **Packet bit order.** Set `config.packet.bitOrder: descending` for hardware registers. Declare ranges lowest bit first (`0-7`); the setting mirrors each row's drawing, not its source ranges.
+- **Event modeling frames.** Give every time frame and reset frame a unique number. A reset frame stops the inferred incoming relation; use `->>` to connect it to a specific earlier frame.
 - **C4 wrapping.** C4 element labels wrap by default. Set `config.c4.wrap: false` only when a deliberately unwrapped layout is easier to read.
 - **Sequence group colors.** In a sequence `box`, put the RGB, RGBA, HSL, or HSLA color before the optional description. Hex colors are parsed as comments and do not work there.
 - **XY legends.** Name a line or bar series to include it in the legend; leave it unnamed to omit it. Use `showLegend`, `legendFontSize`, `legendPadding`, and `legendTextColor` when the default legend obscures the chart.
@@ -317,6 +354,7 @@ If the user explicitly asks for raw mermaid source (for embedding in another too
 
 - **Authoritative syntax** → `references/syntax/<type>.md`. Treat these as truth when memory disagrees.
 - **Cross-type examples** → `references/syntax/examples.md`.
+- **Upgrade workflow** → [Mermaid upgrade guide](references/README.md).
 
 ---
 
