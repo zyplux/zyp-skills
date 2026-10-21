@@ -17,7 +17,7 @@ from toon_format import encode
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 app = typer.Typer()
 
@@ -79,11 +79,8 @@ def _validate_columns(available: list[str], columns: list[str]) -> None:
 
 
 def _count(con: duckdb.DuckDBPyConnection) -> int:
-    row = con.execute("SELECT COUNT(*) FROM t").fetchone()
-    if row is None:
-        msg = "COUNT(*) returned no result"
-        raise RuntimeError(msg)
-    return row[0]
+    [(total,)] = con.execute("SELECT COUNT(*) FROM t").fetchall()
+    return total
 
 
 class PreviewOptions(NamedTuple):
@@ -146,7 +143,7 @@ def _describe_stats(con: duckdb.DuckDBPyConnection, stem: str) -> str:
                 f"null={null_str}",
             ]
         else:
-            parts = [f"unique={row[4]}", f"null={null_str}"]
+            parts = [f"approx_unique={row[4]}", f"null={null_str}"]
         lines.append(f"  {name}({dtype}): {' '.join(parts)}")
     return "\n".join(lines)
 
@@ -257,7 +254,7 @@ def schema(path: PathArgument) -> None:
 
 @app.command()
 def describe(path: PathArgument) -> None:
-    """Describe columns with unique/min/max/avg/quartile stats."""
+    """Describe columns with min/max/avg and approximate distinct/quartile stats."""
     _run_per_path(_resolve_all(path), _describe_stats)
 
 
