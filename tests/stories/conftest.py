@@ -34,11 +34,6 @@ def release() -> ModuleType:
 
 
 @pytest.fixture(scope="session")
-def stormitem() -> ModuleType:
-    return _load_cli_module(REPO_ROOT / "skills" / "stormitem" / "stormitem.py")
-
-
-@pytest.fixture(scope="session")
 def h2md() -> ModuleType:
     return _load_cli_module(REPO_ROOT / "skills" / "h2md" / "h2md.py")
 

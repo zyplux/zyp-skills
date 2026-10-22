@@ -11,7 +11,7 @@ The bump is anchored to `origin/main`:
   to `main`'s version and apply the new kind (so patch → minor cleans
   up the patch increment).
 
-This makes repeated bumps idempotent: re-running `just b <skill>` and pushing
+This makes repeated bumps idempotent: re-running `just bump <skill>` and pushing
 again won't grow the version past one step. PR scope changes (chore → feat
 → feat!) are handled by re-running with `--minor` or `--major`.
 """

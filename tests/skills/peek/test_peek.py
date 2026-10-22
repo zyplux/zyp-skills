@@ -119,9 +119,9 @@ def test_describe_mode(invoke: Callable[..., Result]) -> None:
     result = invoke("describe")
     assert result.output == (
         "tourney_points{5 cols, 94 rows}:\n"
-        "  tourney_category(VARCHAR): unique=17 null=0%\n"
-        "  tourney_level(VARCHAR): unique=13 null=0%\n"
-        "  round(VARCHAR): unique=12 null=0%\n"
+        "  tourney_category(VARCHAR): approx_unique=15 null=0%\n"
+        "  tourney_level(VARCHAR): approx_unique=12 null=0%\n"
+        "  round(VARCHAR): approx_unique=11 null=0%\n"
         "  round_of(INTEGER): min=0 max=256 avg=31 q25=4 q50=16 q75=40 null=0%\n"
         "  points(INTEGER): min=1 max=2000 avg=126.6 q25=8 q50=25 q75=100 null=0%\n"
     )

@@ -19,7 +19,7 @@ default:
 # Install both workspaces: pnpm + uv.
 install:
     pnpm install
-    uv sync --all-packages --all-groups
+    uv sync --locked --all-packages --all-groups
 
 # Report unused files, deps, and exports: knip (JS workspace) + vulture (Python).
 knip:

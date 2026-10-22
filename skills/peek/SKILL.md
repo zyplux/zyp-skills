@@ -7,7 +7,7 @@ description: >
   Prefer this over writing python -c one-liners with polars/pandas — saves tokens and avoids boilerplate.
 metadata:
   kind: cli
-  version: "1.0.0"
+  version: "1.0.1"
   user-invocable: "true"
   argument-hint: <preview|schema|describe|unique|groupby|sql> <path>... [options]
 ---
@@ -28,7 +28,7 @@ Each mode is its own subcommand.
 |------|------------|---------|
 | Preview | `preview` | Show first N rows |
 | Schema | `schema` | Columns, types, and row count — no data |
-| Describe | `describe` | Per-column stats — unique/min/max/avg/quartiles |
+| Describe | `describe` | Per-column stats — min/max/avg and approximate distinct counts/quartiles |
 | Unique | `unique --cols col1,col2` | Distinct values of column(s) |
 | Group-by | `groupby --cols col1,col2` | Group-by counts |
 | SQL | `sql -q "..."` | DuckDB SQL — full dialect including regex, CTEs, window functions (tables: `t`, `t1`, `t2`, ...) |
@@ -109,10 +109,12 @@ rows: 1000
 
 Describe (`peek describe data/sales.parquet`):
 
+Distinct counts and quartiles are approximate.
+
 ```text
 sales{3 cols, 1000 rows}:
   id(BIGINT): min=1 max=1000 avg=500 q25=250 q50=500 q75=750 null=0%
-  name(VARCHAR): unique=42 null=0%
+  name(VARCHAR): approx_unique=42 null=0%
   amount(DOUBLE): min=0.5 max=9999.0 avg=450.2 q25=120 q50=380 q75=720 null=0%
 ```
 

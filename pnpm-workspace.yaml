@@ -2,16 +2,16 @@ packages:
   - skills/*
 
 catalog:
-  '@types/node': ^26.6.4
-  '@vitest/coverage-istanbul': ^5.0.3
-  '@zyplux/cz': ^0.9.1
-  '@zyplux/eslint-config': ^0.11.0
+  '@types/node': ^26.6.5
+  '@vitest/coverage-istanbul': ^5.0.5
+  '@zyplux/cz': ^0.12.0
+  '@zyplux/eslint-config': ^0.12.0
   '@zyplux/tsconfig': ^0.3.2
-  eslint: ^10.12.0
-  knip: ^6.40.0
-  prettier: ^3.9.9
+  eslint: ^10.13.0
+  knip: ^6.42.1
+  prettier: ^3.9.10
   typescript: ^6.0.3
-  vitest: ^5.0.3
+  vitest: ^5.0.5
 
 minimumReleaseAge: 1440
 minimumReleaseAgeExcludePrune: true

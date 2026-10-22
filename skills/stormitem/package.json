@@ -1,7 +1,0 @@
-{
-  "name": "stormitem",
-  "version": "0.2.2",
-  "bin": {
-    "stormitem": "./stormitem.py"
-  }
-}

@@ -9,12 +9,13 @@ Reusable skills for Codex and Claude Code.
 | [peek](skills/peek/SKILL.md) | cli | Inspect parquet files — preview, schema, unique values, group-by, SQL |
 | [h2md](skills/h2md/SKILL.md) | cli | Convert web articles to clean, faithful markdown |
 | [suggest](skills/suggest/SKILL.md) | cli | Submit structured improvement suggestions for skills |
-| [gen-commit-message](skills/gen-commit-message/SKILL.md) | prompt | Generate a Conventional Commits message for the current project |
 | [mermaid](skills/mermaid/SKILL.md) | prompt | Pick the right Mermaid diagram type and render it correctly |
 | [plan-storm](skills/plan-storm/SKILL.md) | prompt | Brainstorm a `plan.md` through option-rich rounds before any code |
 | [resolve-pr-gate](skills/resolve-pr-gate/SKILL.md) | prompt | Resolve CI failures and findings from Copilot and Codex until the aggregate PR gate passes |
 
 Each skill declares `metadata.kind` in its SKILL.md: `cli` skills ship an executable; `prompt` skills are SKILL.md-driven with no binary. Omitting `metadata.kind` defaults to `prompt`.
+
+For Mermaid syntax and version updates, follow the [Mermaid upgrade guide](skills/mermaid/references/README.md).
 
 ## Development
 
