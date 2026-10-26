@@ -333,12 +333,15 @@ def test_dirty_working_tree_stops_before_gate_actions(tmp_path: Path) -> None:
     assert "NEXT ACTION" not in completed.stdout
 
 
-def test_push_precedes_validation(tmp_path: Path) -> None:
+def test_validation_order(tmp_path: Path) -> None:
     completed = run_script(tmp_path, {"local_head_oid": "b" * 40, "branch_counts": "0 1"})
 
     assert completed.returncode == 0, completed.stderr
     assert "1 unpushed commit" in completed.stdout
-    assert completed.stdout.index("run just pr to push") < completed.stdout.index("focused linting")
+    lint_position = completed.stdout.index("focused linting and typechecking")
+    push_position = completed.stdout.index("run just pr to push")
+    test_position = completed.stdout.index("targeted tests")
+    assert lint_position < push_position < test_position
     assert "run just c" not in completed.stdout
     assert "Reuse passing checks for unaffected code and configuration" in completed.stdout
     assert "wording, docs and PR metadata alone do not warrant a full local gate" in completed.stdout

@@ -509,11 +509,11 @@ def print_next_action(
     owner, repo = parse_pr_repo(pr.url)
     actions.extend([
         (
-            "If fixes change files or commits are unpushed, commit prepared fixes, "
-            "then run just pr to push and start CI/reviews before local checks."
+            "If fixes change files or commits are unpushed, run focused linting and typechecking, "
+            "commit prepared fixes, then run just pr to push and start CI/reviews."
         ),
         (
-            "After pushing, prefer focused linting, typechecking and targeted tests. "
+            "After pushing, run warranted targeted tests. "
             "Reuse passing checks for unaffected code and configuration; "
             "wording, docs and PR metadata alone do not warrant a full local gate."
         ),
