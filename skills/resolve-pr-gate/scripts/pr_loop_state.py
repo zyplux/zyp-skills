@@ -514,14 +514,14 @@ def print_next_action(
             "commit prepared fixes, then run just pr to push and start CI/reviews."
         ),
         (
-            "After pushing, run slower targeted tests only when warranted by the change. "
-            "Reuse passing checks for unaffected code and configuration; "
-            "wording, docs and PR metadata alone do not warrant a full local gate."
+            "Compare actual CI and local gate definitions: rely on CI for equivalent coverage. "
+            "After pushing, run slower targeted tests only when warranted by the change and absent from CI, "
+            "or explicitly requested. "
+            "Report which checks actually ran and where."
         ),
         (
-            "Compare actual CI and local gate definitions: rely on CI for equivalent coverage; "
-            "run additional suites only when warranted by the change or explicitly requested. "
-            "Report which checks actually ran and where."
+            "Reuse passing checks for unaffected code and configuration; "
+            "wording, docs and PR metadata alone do not warrant a full local gate."
         ),
         (
             "After resolving threads without a push, refresh the verdict: "
