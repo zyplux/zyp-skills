@@ -338,10 +338,11 @@ def test_validation_order(tmp_path: Path) -> None:
 
     assert completed.returncode == 0, completed.stderr
     assert "1 unpushed commit" in completed.stdout
-    lint_position = completed.stdout.index("focused linting and typechecking")
+    lint_position = completed.stdout.index("linting and typechecking for the whole change")
+    quick_check_position = completed.stdout.index("under 15 seconds total, including startup")
     push_position = completed.stdout.index("run just pr to push")
-    test_position = completed.stdout.index("targeted tests")
-    assert lint_position < push_position < test_position
+    slow_test_position = completed.stdout.index("slower targeted tests")
+    assert lint_position < quick_check_position < push_position < slow_test_position
     assert "run just c" not in completed.stdout
     assert "Reuse passing checks for unaffected code and configuration" in completed.stdout
     assert "wording, docs and PR metadata alone do not warrant a full local gate" in completed.stdout
