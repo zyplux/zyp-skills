@@ -4,9 +4,9 @@ packages:
 catalog:
   '@types/node': ^26.6.5
   '@vitest/coverage-istanbul': ^5.0.5
-  '@zyplux/cz': ^0.12.0
-  '@zyplux/eslint-config': ^0.12.0
-  '@zyplux/tsconfig': ^0.3.2
+  '@zyplux/cz': ^0.15.0
+  '@zyplux/eslint-config': ^0.12.1
+  '@zyplux/tsconfig': ^0.3.3
   eslint: ^10.13.0
   knip: ^6.42.1
   prettier: ^3.9.10

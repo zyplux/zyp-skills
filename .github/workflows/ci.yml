@@ -19,16 +19,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: pnpm/setup@v2
-        with:
-          cache: true
-          install: false
-      - uses: astral-sh/setup-uv@v9.0.0
-        with:
-          python-version: '3.14'
-          enable-cache: true
-      - run: pnpm install --frozen-lockfile --no-runtime
-      - run: uv sync --locked --all-groups
+      - uses: zyplux/zyplux/apps/action-setup-pm@setup-pm-v1
       - run: pnpm run knip
       - run: uv run --no-sync vulture
       - run: pnpm run typecheck
