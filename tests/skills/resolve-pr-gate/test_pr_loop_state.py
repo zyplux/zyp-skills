@@ -333,13 +333,22 @@ def test_dirty_working_tree_stops_before_gate_actions(tmp_path: Path) -> None:
     assert "NEXT ACTION" not in completed.stdout
 
 
-def test_unpushed_commits_require_checks_and_push(tmp_path: Path) -> None:
+def test_validation_order(tmp_path: Path) -> None:
     completed = run_script(tmp_path, {"local_head_oid": "b" * 40, "branch_counts": "0 1"})
 
     assert completed.returncode == 0, completed.stderr
     assert "1 unpushed commit" in completed.stdout
-    assert "run just c" in completed.stdout
-    assert "run just pr to push and request review" in completed.stdout
+    lint_position = completed.stdout.index("linting and typechecking for the whole change")
+    quick_check_position = completed.stdout.index("under 15 seconds total, including startup")
+    push_position = completed.stdout.index("run just pr to push")
+    ci_position = completed.stdout.index("Compare actual CI and local gate definitions")
+    slow_test_position = completed.stdout.index("slower targeted tests")
+    assert lint_position < quick_check_position < push_position < ci_position < slow_test_position
+    assert "run just c" not in completed.stdout
+    assert "Reuse passing checks for unaffected code and configuration" in completed.stdout
+    assert "wording, docs and PR metadata alone do not warrant a full local gate" in completed.stdout
+    assert "rely on CI for equivalent coverage" in completed.stdout
+    assert "warranted by the change and absent from CI" in completed.stdout[slow_test_position:]
     assert "are green" not in completed.stdout
 
 

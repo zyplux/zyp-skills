@@ -1,11 +1,5 @@
 # Temporary overlays the bundled cerberus defaults while these checks still encode assumptions that do not fit this repository.
 
-[ci_check_sequence]
-off = true
-
-[workflow_toolchain_only]
-off = true
-
 [fallow]
 off = true
 
