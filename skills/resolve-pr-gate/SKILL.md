@@ -8,7 +8,7 @@ description: >
   a natural-language request.
 metadata:
   kind: prompt
-  version: "0.1.0"
+  version: "0.1.1"
   user-invocable: "true"
 ---
 
@@ -21,7 +21,9 @@ With the repository root as `cwd`, run `scripts/pr_loop_state.py` from the direc
 - Completion requires `ci` and `bot-review-complete` for the current PR head, with no unresolved threads from Copilot or `chatgpt-codex-connector`. The shared gate owns review completion and quota fallback; use its aggregate verdict.
 - Preserve the repository's automatic-review trigger. When the gate waits for Codex, inspect its summary and recent review requests. Post `@codex review` once if the current head has no running review or pending request, including when Smart detection has not requested a fresh review.
 - Validate findings against the current code. Fix valid findings, explain why invalid findings should not be applied, and resolve every addressed thread, including findings on earlier commits.
-- Run the full `just c` gate for fixes or unpushed commits. Reuse a passing run when HEAD is unchanged. Commit resulting changes and use `just pr` when commits need pushing and review needs requesting.
+- Commit prepared fixes and run `just pr` to push and start CI/reviews before local validation.
+- Minimize local runs: after pushing, prefer focused linting, typechecking and targeted tests. Reuse passing checks for unaffected code and configuration. Wording, docs and PR metadata alone do not warrant a full local gate.
+- Inspect actual CI and local gate definitions. Rely on CI for equivalent coverage; run additional suites only when warranted by the change or explicitly requested. Report which checks actually ran and where.
 - After resolving threads without a push, use the script's `gh workflow run org_gate.yml` command to refresh the verdict. Refreshing alone requires no empty commit or repeat local test run.
 - Missing or pending review evidence remains blocking. Inspect the linked workflow when progress stops; report unavailable reviewers or access/configuration failures that cannot be cleared by a code fix. Inspect review progress after 12 minutes before treating it as stuck.
 - Commit recognized local changes without pushing when instructed. Stop on unfamiliar changes or an unsafe branch relation. A separate human-review gate may prevent merging.

@@ -509,8 +509,18 @@ def print_next_action(
     owner, repo = parse_pr_repo(pr.url)
     actions.extend([
         (
-            "If fixes change files or commits are unpushed, run just c until it passes, commit resulting changes, "
-            "then run just pr to push and request review. Reuse a passing check when HEAD is unchanged."
+            "If fixes change files or commits are unpushed, commit prepared fixes, "
+            "then run just pr to push and start CI/reviews before local checks."
+        ),
+        (
+            "After pushing, prefer focused linting, typechecking and targeted tests. "
+            "Reuse passing checks for unaffected code and configuration; "
+            "wording, docs and PR metadata alone do not warrant a full local gate."
+        ),
+        (
+            "Compare actual CI and local gate definitions: rely on CI for equivalent coverage; "
+            "run additional suites only when warranted by the change or explicitly requested. "
+            "Report which checks actually ran and where."
         ),
         (
             "After resolving threads without a push, refresh the verdict: "
