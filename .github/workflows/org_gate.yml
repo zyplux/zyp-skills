@@ -11,6 +11,9 @@ on:
         description: Pull request number to refresh
         required: true
         type: string
+      sha:
+        description: Pull request head commit to evaluate
+        type: string
 
 permissions:
   statuses: write
@@ -19,7 +22,9 @@ permissions:
 
 jobs:
   org_gate_base:
+    cache-mode: read
     if: github.event_name != 'issue_comment' || github.event.issue.pull_request != null
     uses: zyplux/.github/.github/workflows/org_gate_base.yml@main
     with:
       pr: ${{ inputs.pr || '' }}
+      sha: ${{ inputs.sha || '' }}

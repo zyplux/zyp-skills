@@ -1,5 +1,8 @@
 # Temporary overlays the bundled cerberus defaults while these checks still encode assumptions that do not fit this repository.
 
+[source_oracle.types.prod]
+roots = ["apps/*", "packages/*", "src", "tools/*", "skills/*"]
+
 [fallow]
 off = true
 
