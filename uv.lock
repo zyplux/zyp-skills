@@ -1009,7 +1009,7 @@ lint = [
     { name = "ruff", specifier = ">=0.17.3" },
     { name = "rumdl", specifier = ">=0.3.2" },
     { name = "vulture", specifier = ">=2.16" },
-    { name = "zyplux-cerberus", specifier = ">=0.27.2" },
+    { name = "zyplux-cerberus", specifier = ">=0.27.3" },
 ]
 test = [
     { name = "beautifulsoup4", specifier = ">=4.15.0" },
@@ -1058,7 +1058,7 @@ wheels = [
 
 [[package]]
 name = "zyplux-cerberus"
-version = "0.27.2"
+version = "0.27.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "networkx" },
@@ -1073,7 +1073,7 @@ dependencies = [
     { name = "typer" },
     { name = "zyplux-airlock" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/db/55/96230d35935a21227a360187ae4682f65835e0ff1db08f634c2d80ab88ac/zyplux_cerberus-0.27.2.tar.gz", hash = "sha256:96e7507c3e72afbe40d085f03557d5d50cbf1e225a015473943611e96850df8f", size = 79016, upload-time = "2026-11-01T06:30:30.422Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/00/3a/0e91d2453a49250844d605069b352823b5f5c4df85bbd03a7752c2419b6a/zyplux_cerberus-0.27.3.tar.gz", hash = "sha256:e05de8197a19d385664e1299cbd1c7bc202bca56da1db1f5ef71f80e425078ec", size = 79304, upload-time = "2026-11-02T03:32:46.105Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/45/3a/aa49b5349cf0e12278b493c16ebea22564a6d0ba0c889e0bba8cd0938154/zyplux_cerberus-0.27.2-py3-none-any.whl", hash = "sha256:640d042e536577e6051aa1454785d8f22b9a91a49c53133acc90dcb43ca4861d", size = 109694, upload-time = "2026-11-01T06:30:29.22Z" },
+    { url = "https://files.pythonhosted.org/packages/84/23/82d8d09f6db0cc8872d6cd3859ba5686cf6846a477af16cdf461d78b1d98/zyplux_cerberus-0.27.3-py3-none-any.whl", hash = "sha256:bfe45abb3bfc23a6ff19a1d8e41c4e660fda34b7530d72c8f9d95fd71ff76a0a", size = 109987, upload-time = "2026-11-02T03:32:45.094Z" },
 ]
