@@ -34,4 +34,4 @@ just p           # push branch + open draft PR (-r marks ready, waits, squash-me
 
 The org gate requires `ci` and `bot-review-complete` for the current PR head. The shared bot gate accepts clean reviews from both bots, or one clean review when the other explicitly reports a quota limit. Unresolved findings from either bot block the gate.
 
-Enable automatic Copilot reviews through the org ruleset and [Codex Code Review](https://learn.chatgpt.com/docs/third-party/github) for all PRs and new pushes in Codex settings.
+Enable automatic Copilot reviews through the org ruleset and [Codex Code Review](https://learn.chatgpt.com/docs/third-party/github) in Codex settings. Preserve the configured review trigger, including Smart review detection.
