@@ -1,10 +1,6 @@
 name: org_gate
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-  issue_comment:
-    types: [created, edited, deleted]
   workflow_dispatch:
     inputs:
       pr:
@@ -22,8 +18,6 @@ permissions:
 
 jobs:
   org_gate_base:
-    cache-mode: read
-    if: github.event_name != 'issue_comment' || github.event.issue.pull_request != null
     uses: zyplux/.github/.github/workflows/org_gate_base.yml@main
     with:
       pr: ${{ inputs.pr || '' }}
